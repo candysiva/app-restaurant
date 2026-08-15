@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { CategoryApi, MenuApi } from '../lib/data'
+import { CategoryApi, MenuApi, sortCategories } from '../lib/data'
 import type { CategoryItem, MenuItem, PriceType } from '../lib/types'
 import { formatInr } from '../lib/format'
 import { PlusIcon, CloseIcon, TrashIcon } from '../components/icons'
@@ -24,10 +24,7 @@ export function Menu() {
     () => (rawItems ?? []).slice().sort((a, b) => a.name.localeCompare(b.name)),
     [rawItems],
   )
-  const categories = useMemo(
-    () => (rawCategories ?? []).slice().sort((a, b) => a.name.localeCompare(b.name)),
-    [rawCategories],
-  )
+  const categories = useMemo(() => sortCategories(rawCategories ?? []), [rawCategories])
 
   const grouped = useMemo(() => {
     const map = new Map<string, MenuItem[]>()

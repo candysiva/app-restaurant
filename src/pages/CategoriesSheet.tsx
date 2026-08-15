@@ -1,8 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { CategoryApi, MenuApi } from '../lib/data'
+import { CategoryApi, MenuApi, sortCategories } from '../lib/data'
 import type { CategoryItem } from '../lib/types'
 import { ApiError } from '../lib/api'
-import { CloseIcon, TrashIcon } from '../components/icons'
+import { ChevronDownIcon, ChevronUpIcon, CloseIcon, TrashIcon } from '../components/icons'
 import { useConfirm } from '../lib/confirm'
 
 const STARTER_CATEGORIES = ['Tiffin', 'Batter', 'Beverages', 'Others']
@@ -15,11 +15,12 @@ export function CategoriesSheet({ onClose }: { onClose: () => void }) {
   const [busy, setBusy] = useState(false)
   const [editing, setEditing] = useState<CategoryItem | null>(null)
   const [seeding, setSeeding] = useState(false)
+  const [reordering, setReordering] = useState(false)
 
   function load() {
     Promise.all([CategoryApi.list(), MenuApi.list()])
       .then(([cats, items]) => {
-        setCategories(cats.sort((a, b) => a.name.localeCompare(b.name)))
+        setCategories(sortCategories(cats))
         const counts = new Map<string, number>()
         for (const item of items) {
           if (item.category) counts.set(item.category.id, (counts.get(item.category.id) ?? 0) + 1)
@@ -37,8 +38,9 @@ export function CategoriesSheet({ onClose }: { onClose: () => void }) {
     setError(null)
     setBusy(true)
     try {
-      const created = await CategoryApi.create(name.trim())
-      setCategories((prev) => [...(prev ?? []), created].sort((a, b) => a.name.localeCompare(b.name)))
+      const nextOrder = (categories ?? []).reduce((max, c) => Math.max(max, c.sortOrder ?? 0), -1) + 1
+      const created = await CategoryApi.create(name.trim(), nextOrder)
+      setCategories((prev) => [...(prev ?? []), created])
       setName('')
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not add category')
@@ -51,13 +53,48 @@ export function CategoriesSheet({ onClose }: { onClose: () => void }) {
     setSeeding(true)
     setError(null)
     try {
-      const created = await Promise.all(STARTER_CATEGORIES.map((n) => CategoryApi.create(n)))
-      setCategories((prev) => [...(prev ?? []), ...created].sort((a, b) => a.name.localeCompare(b.name)))
+      const created = await Promise.all(STARTER_CATEGORIES.map((n, i) => CategoryApi.create(n, i)))
+      setCategories((prev) => sortCategories([...(prev ?? []), ...created]))
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not add starter categories')
     } finally {
       setSeeding(false)
     }
+  }
+
+  async function reorder(newList: CategoryItem[]) {
+    const prev = categories ?? []
+    const renumbered = newList.map((c, i) => ({ ...c, sortOrder: i }))
+    setCategories(renumbered)
+    setReordering(true)
+    setError(null)
+    const changed = renumbered.filter((c) => prev.find((p) => p.id === c.id)?.sortOrder !== c.sortOrder)
+    try {
+      await Promise.all(changed.map((c) => CategoryApi.update(c.id, { sortOrder: c.sortOrder })))
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not save the new order')
+      setCategories(prev)
+    } finally {
+      setReordering(false)
+    }
+  }
+
+  function moveUp(id: string) {
+    const list = categories ?? []
+    const idx = list.findIndex((c) => c.id === id)
+    if (idx <= 0) return
+    const next = list.slice()
+    ;[next[idx - 1], next[idx]] = [next[idx], next[idx - 1]]
+    reorder(next)
+  }
+
+  function moveDown(id: string) {
+    const list = categories ?? []
+    const idx = list.findIndex((c) => c.id === id)
+    if (idx === -1 || idx >= list.length - 1) return
+    const next = list.slice()
+    ;[next[idx], next[idx + 1]] = [next[idx + 1], next[idx]]
+    reorder(next)
   }
 
   return (
@@ -76,6 +113,11 @@ export function CategoriesSheet({ onClose }: { onClose: () => void }) {
         <div className="flex-1 overflow-y-auto px-5">
           {error && <p className="my-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           {categories === null && !error && <p className="py-6 text-center text-sm text-neutral-400">Loading…</p>}
+          {categories && categories.length > 1 && (
+            <p className="mb-1 mt-3 text-xs text-neutral-400">
+              Use the arrows to reorder — items you sell most go at the top.
+            </p>
+          )}
           {categories?.length === 0 && (
             <div className="py-6 text-center">
               <p className="mb-3 text-sm text-neutral-400">No categories yet.</p>
@@ -88,17 +130,36 @@ export function CategoriesSheet({ onClose }: { onClose: () => void }) {
               </button>
             </div>
           )}
-          {categories?.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setEditing(cat)}
-              className="flex w-full items-center justify-between border-b border-neutral-50 py-3 text-left"
-            >
-              <span className="text-sm font-medium text-neutral-900">{cat.name}</span>
-              <span className="text-xs text-neutral-400">
-                {itemCounts.get(cat.id) ?? 0} item{(itemCounts.get(cat.id) ?? 0) === 1 ? '' : 's'}
-              </span>
-            </button>
+          {categories?.map((cat, idx) => (
+            <div key={cat.id} className="flex items-center gap-1 border-b border-neutral-50 py-1.5">
+              <div className="flex flex-col">
+                <button
+                  onClick={() => moveUp(cat.id)}
+                  disabled={reordering || idx === 0}
+                  aria-label={`Move ${cat.name} up`}
+                  className="rounded p-1 text-neutral-400 active:bg-neutral-100 disabled:opacity-25"
+                >
+                  <ChevronUpIcon className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => moveDown(cat.id)}
+                  disabled={reordering || idx === categories.length - 1}
+                  aria-label={`Move ${cat.name} down`}
+                  className="rounded p-1 text-neutral-400 active:bg-neutral-100 disabled:opacity-25"
+                >
+                  <ChevronDownIcon className="h-4 w-4" />
+                </button>
+              </div>
+              <button
+                onClick={() => setEditing(cat)}
+                className="flex flex-1 items-center justify-between py-1.5 text-left"
+              >
+                <span className="text-sm font-medium text-neutral-900">{cat.name}</span>
+                <span className="text-xs text-neutral-400">
+                  {itemCounts.get(cat.id) ?? 0} item{(itemCounts.get(cat.id) ?? 0) === 1 ? '' : 's'}
+                </span>
+              </button>
+            </div>
           ))}
         </div>
 
@@ -127,7 +188,7 @@ export function CategoriesSheet({ onClose }: { onClose: () => void }) {
           itemCount={itemCounts.get(editing.id) ?? 0}
           onClose={() => setEditing(null)}
           onSaved={(updated) => {
-            setCategories((prev) => prev?.map((c) => (c.id === updated.id ? updated : c)).sort((a, b) => a.name.localeCompare(b.name)) ?? null)
+            setCategories((prev) => sortCategories(prev?.map((c) => (c.id === updated.id ? updated : c)) ?? []))
             setEditing(null)
           }}
           onDeleted={(id) => {
@@ -164,8 +225,8 @@ function EditCategorySheet({
     setError(null)
     setBusy(true)
     try {
-      const updated = await CategoryApi.update(category.id, name.trim())
-      onSaved(updated)
+      const updated = await CategoryApi.update(category.id, { name: name.trim() })
+      onSaved({ ...category, ...updated })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not rename category')
     } finally {

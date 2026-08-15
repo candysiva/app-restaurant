@@ -38,9 +38,17 @@ function toMenuItem(raw: RawMenuItem): MenuItem {
 
 export const CategoryApi = {
   list: () => api.get<CategoryItem>('/categories?limit=200'),
-  create: (name: string) => api.post<CategoryItem>('/categories', { name }),
-  update: (id: string, name: string) => api.patch<CategoryItem>(`/categories/${id}`, { name }),
+  create: (name: string, sortOrder?: number) =>
+    api.post<CategoryItem>('/categories', sortOrder === undefined ? { name } : { name, sortOrder }),
+  update: (id: string, data: Partial<{ name: string; sortOrder: number }>) =>
+    api.patch<CategoryItem>(`/categories/${id}`, data),
   remove: (id: string) => api.del(`/categories/${id}`),
+}
+
+export function sortCategories(categories: CategoryItem[]): CategoryItem[] {
+  return categories
+    .slice()
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name))
 }
 
 export const MenuApi = {

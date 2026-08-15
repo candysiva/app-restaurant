@@ -41,7 +41,7 @@ This role check is enforced in the app's UI/routing, not by the backend — ever
 
 ## Categories
 
-Menu categories (Tiffin, Batter, ...) are no longer fixed — owners manage them from **Settings → Categories**: add, rename, or delete (deleting is blocked while any menu item still uses that category, so items are never silently orphaned). New shops start with zero categories; the Categories screen offers a one-tap "add starter categories" shortcut, or add your own from scratch. A menu item needs at least one category to exist before you can add items in the Menu tab.
+Menu categories (Tiffin, Batter, ...) are no longer fixed — owners manage them from **Settings → Categories**: add, rename, reorder, or delete (deleting is blocked while any menu item still uses that category, so items are never silently orphaned). Use the up/down arrows next to each category to reorder — this order controls the category tabs in Billing and the section order in Menu, so put your most-ordered category first for quicker tapping. New shops start with zero categories; the Categories screen offers a one-tap "add starter categories" shortcut, or add your own from scratch. A menu item needs at least one category to exist before you can add items in the Menu tab.
 
 **Migrating from before this feature:** menu items created before categories existed won't have one assigned (they show up under "Uncategorized" in Menu and are only reachable via the "All" tab in Billing) — open each one and pick a category to file it properly.
 

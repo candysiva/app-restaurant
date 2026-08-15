@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CategoryApi, MenuApi, submitOrder, type CartLine } from '../lib/data'
+import { CategoryApi, MenuApi, sortCategories, submitOrder, type CartLine } from '../lib/data'
 import type { MenuItem, PaymentMethod } from '../lib/types'
 import { formatInr } from '../lib/format'
 import { ApiError } from '../lib/api'
@@ -23,10 +23,7 @@ export function Billing() {
     () => (allItems ?? []).filter((i) => i.active).sort((a, b) => a.name.localeCompare(b.name)),
     [allItems],
   )
-  const categories = useMemo(
-    () => (allCategories ?? []).slice().sort((a, b) => a.name.localeCompare(b.name)),
-    [allCategories],
-  )
+  const categories = useMemo(() => sortCategories(allCategories ?? []), [allCategories])
 
   const visibleItems = useMemo(
     () => items.filter((i) => tab === ALL_TAB || i.category?.id === tab),
