@@ -2,6 +2,8 @@
 
 A fast, mobile-first billing app for a South Indian tiffin counter and rice flour batter (maavu) retail shop. Built as a PWA (installable from the browser, no app store needed) with an [Aaly](https://aaly.io) backend.
 
+**Live:** https://candysiva.github.io/app-restaurant/ (see [Deployment](#deployment) below — Pages needs a one-time enable in repo settings before the first deploy goes live).
+
 ## v1 scope
 
 - **Menu** — fixed-price items (idly, dosa, parotta, ...) and per-kg items (batter/maavu), grouped by category.
@@ -33,3 +35,12 @@ The backend project starts with no users. On first launch, use the **First-time 
 ## Installing on a phone
 
 Open the deployed URL in Chrome (Android) or Safari (iOS) and use "Add to Home Screen" — it installs like a native app icon and launches full-screen.
+
+## Deployment
+
+`.github/workflows/deploy-pages.yml` builds and deploys to GitHub Pages automatically on every push to `main` or the active feature branch. One-time setup (repo owner only):
+
+1. GitHub repo → **Settings → Pages → Build and deployment → Source** → select **GitHub Actions**.
+2. Push (or re-run the workflow from the **Actions** tab) — the site publishes to `https://<owner>.github.io/app-restaurant/`.
+
+The app is built with `base: '/app-restaurant/'` in `vite.config.ts` to match the Pages project-site path. If the repo is ever renamed, update `base` there (and the base path in `public/404.html`) to match.
