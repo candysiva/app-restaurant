@@ -37,9 +37,9 @@ export function Login() {
       <div className="mx-auto w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-brand-700 text-2xl font-extrabold text-brand-50">
-            SB
+            DT
           </div>
-          <h1 className="text-xl font-bold text-neutral-900">SB Billing</h1>
+          <h1 className="text-xl font-bold text-neutral-900">Dhanalakshmi Tiffen Stall</h1>
           <p className="mt-1 text-sm text-neutral-500">Menu &amp; batter counter billing</p>
         </div>
 

@@ -1,20 +1,25 @@
 import { NavLink } from 'react-router-dom'
 import { BillIcon, MenuBookIcon, OrdersIcon, DashboardIcon } from './icons'
+import { isOwner } from '../lib/types'
+import { useAuth } from '../lib/auth'
 
 const tabs = [
-  { to: '/', label: 'Bill', Icon: BillIcon, end: true },
-  { to: '/menu', label: 'Menu', Icon: MenuBookIcon, end: false },
-  { to: '/orders', label: 'Orders', Icon: OrdersIcon, end: false },
-  { to: '/dashboard', label: 'Dashboard', Icon: DashboardIcon, end: false },
+  { to: '/', label: 'Bill', Icon: BillIcon, end: true, ownerOnly: false },
+  { to: '/menu', label: 'Menu', Icon: MenuBookIcon, end: false, ownerOnly: false },
+  { to: '/orders', label: 'Orders', Icon: OrdersIcon, end: false, ownerOnly: false },
+  { to: '/dashboard', label: 'Dashboard', Icon: DashboardIcon, end: false, ownerOnly: true },
 ]
 
 export function BottomNav() {
+  const { user } = useAuth()
+  const visibleTabs = tabs.filter((t) => !t.ownerOnly || isOwner(user))
+
   return (
     <nav
       className="sticky bottom-0 z-20 flex border-t border-neutral-200 bg-white pb-[env(safe-area-inset-bottom)]"
       aria-label="Primary"
     >
-      {tabs.map(({ to, label, Icon, end }) => (
+      {visibleTabs.map(({ to, label, Icon, end }) => (
         <NavLink
           key={to}
           to={to}

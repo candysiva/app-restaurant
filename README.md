@@ -1,4 +1,4 @@
-# SB Billing
+# Dhanalakshmi Tiffen Stall
 
 A fast, mobile-first billing app for a South Indian tiffin counter and rice flour batter (maavu) retail shop. Built as a PWA (installable from the browser, no app store needed) with an [Aaly](https://aaly.io) backend.
 
@@ -32,9 +32,11 @@ npm run lint     # oxlint
 
 The backend project starts with no users. On first launch, use the **First-time setup** tab on the login screen to create the shop's account (this also creates the shop's tenant/shared workspace).
 
-## Adding staff logins
+## Staff logins and roles
 
-After first-time setup, additional staff get their own login (name + email/phone + password) from **Orders → Staff** in the app — no separate signup needed. Everyone added this way shares the same shop data (menu, orders, dashboard).
+The first-time-setup account is the **owner**. From **Orders → Staff** (owners only), the owner can add teammates directly — no separate signup needed — edit their name/role/password, or remove their login. Everyone shares the same shop data (menu, orders), but the **Dashboard is owner-only**: staff logins don't see the sales tab in the nav, and are redirected away if they hit the URL directly.
+
+This role check is enforced in the app's UI/routing, not by the backend — every signed-in user's JWT can still reach the same data API. That's an acceptable tradeoff for a single small shop where everyone is trusted staff, but don't treat it as a security boundary against an untrusted user with API access.
 
 ## Installing on a phone
 

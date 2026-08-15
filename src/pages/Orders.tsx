@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { OrderApi, OrderItemApi } from '../lib/data'
-import type { Order, OrderItem } from '../lib/types'
+import { isOwner, type Order, type OrderItem } from '../lib/types'
 import { formatInr, formatQty, formatTime, todayIso, dateIso } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { CloseIcon, LogoutIcon, UsersIcon } from '../components/icons'
@@ -10,7 +10,7 @@ import { StaffSheet } from './StaffSheet'
 type RangeTab = 'today' | 'week' | 'all'
 
 export function Orders() {
-  const { signOut } = useAuth()
+  const { user, signOut } = useAuth()
   const [range, setRange] = useState<RangeTab>('today')
   const [orders, setOrders] = useState<Order[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -49,12 +49,14 @@ export function Orders() {
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold text-neutral-900">Orders</h1>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowStaff(true)}
-              className="flex items-center gap-1 text-sm font-medium text-neutral-400"
-            >
-              <UsersIcon className="h-4 w-4" /> Staff
-            </button>
+            {isOwner(user) && (
+              <button
+                onClick={() => setShowStaff(true)}
+                className="flex items-center gap-1 text-sm font-medium text-neutral-400"
+              >
+                <UsersIcon className="h-4 w-4" /> Staff
+              </button>
+            )}
             <button
               onClick={() => confirm('Sign out?') && signOut()}
               className="flex items-center gap-1 text-sm font-medium text-neutral-400"

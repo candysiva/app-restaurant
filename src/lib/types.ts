@@ -43,10 +43,13 @@ export interface OrderItem {
   orderDate: string
 }
 
+export type Role = 'owner' | 'staff'
+
 export interface AuthUser {
   id: string
   name: string
   email?: string
+  role?: Role
 }
 
 export interface AuthResponse {
@@ -60,5 +63,11 @@ export interface StaffUser {
   email?: string
   phone?: string
   username?: string
+  role?: Role
   _createdAt?: string
+}
+
+/** Missing role = account predates the role field; treat as owner so nobody gets locked out. */
+export function isOwner(user: { role?: Role } | null | undefined): boolean {
+  return user?.role !== 'staff'
 }

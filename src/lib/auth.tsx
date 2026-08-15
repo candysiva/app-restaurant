@@ -47,7 +47,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const body: Record<string, string> = { name, password, tenantName: shopName }
     body[isEmail ? 'email' : 'phone'] = identifier
     const res = await api.post<AuthResponse>('/auth/signup', body)
+    // The first-time-setup signup is always the shop owner; /auth/signup can't
+    // set custom fields, so promote them right after account creation (now
+    // authenticated, since applyAuth just stored the token). Best-effort: if
+    // this fails, the account still exists and can sign in normally.
     applyAuth(res)
+    try {
+      const owner = await api.patch<AuthUser>(`/users/${res.user.id}`, { role: 'owner' })
+      applyAuth({ jwt: res.jwt, user: { ...res.user, ...owner } })
+    } catch {
+      // ignored — missing role defaults to owner access anyway (see isOwner)
+    }
   }
 
   function signOut() {

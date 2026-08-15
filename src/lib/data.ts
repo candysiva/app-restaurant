@@ -1,5 +1,5 @@
 import { api, qs } from './api'
-import type { MenuItem, Order, OrderItem, PaymentMethod, StaffUser } from './types'
+import type { MenuItem, Order, OrderItem, PaymentMethod, Role, StaffUser } from './types'
 
 async function fetchAll<T>(path: string, params: Record<string, string | number | boolean | undefined>): Promise<T[]> {
   const limit = 200
@@ -47,8 +47,11 @@ export const OrderItemApi = {
 
 export const StaffApi = {
   list: () => api.get<StaffUser>('/users?limit=200'),
-  create: (data: { name: string; email?: string; phone?: string; password: string }) =>
+  create: (data: { name: string; email?: string; phone?: string; password: string; role: Role }) =>
     api.post<StaffUser>('/users', data),
+  update: (id: string, data: { name?: string; role?: Role; password?: string }) =>
+    api.patch<StaffUser>(`/users/${id}`, data),
+  remove: (id: string) => api.del(`/users/${id}`),
 }
 
 const ORDER_COUNTER_KEY = 'sb_billing_order_counter'

@@ -14,8 +14,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
-        name: 'Saravana Bhavan Billing',
-        short_name: 'SB Billing',
+        name: 'Dhanalakshmi Tiffen Stall',
+        short_name: 'Dhanalakshmi',
         description: 'Quick billing for menu items and rice flour batter (maavu) sales',
         theme_color: '#b91c1c',
         background_color: '#fff7ed',
