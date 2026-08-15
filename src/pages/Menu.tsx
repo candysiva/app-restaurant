@@ -6,6 +6,7 @@ import { formatInr } from '../lib/format'
 import { PlusIcon, CloseIcon, TrashIcon } from '../components/icons'
 import { ApiError } from '../lib/api'
 import { useCachedFetch } from '../lib/cache'
+import { useConfirm } from '../lib/confirm'
 
 const UNCATEGORIZED = '__uncategorized__'
 
@@ -167,6 +168,7 @@ function MenuItemSheet({
   const [price, setPrice] = useState(item ? String(item.price) : '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const confirmDialog = useConfirm()
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -206,7 +208,12 @@ function MenuItemSheet({
 
   async function handleDelete() {
     if (!item) return
-    if (!confirm(`Remove "${item.name}" from the menu?`)) return
+    const ok = await confirmDialog({
+      title: `Remove "${item.name}" from the menu?`,
+      confirmLabel: 'Remove',
+      danger: true,
+    })
+    if (!ok) return
     setBusy(true)
     try {
       await MenuApi.remove(item.id)

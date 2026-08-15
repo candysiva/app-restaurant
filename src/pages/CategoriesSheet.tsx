@@ -3,6 +3,7 @@ import { CategoryApi, MenuApi } from '../lib/data'
 import type { CategoryItem } from '../lib/types'
 import { ApiError } from '../lib/api'
 import { CloseIcon, TrashIcon } from '../components/icons'
+import { useConfirm } from '../lib/confirm'
 
 const STARTER_CATEGORIES = ['Tiffin', 'Batter', 'Beverages', 'Others']
 
@@ -155,6 +156,7 @@ function EditCategorySheet({
   const [name, setName] = useState(category.name)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const confirmDialog = useConfirm()
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -173,7 +175,12 @@ function EditCategorySheet({
 
   async function handleDelete() {
     if (itemCount > 0) return
-    if (!confirm(`Delete category "${category.name}"?`)) return
+    const ok = await confirmDialog({
+      title: `Delete category "${category.name}"?`,
+      confirmLabel: 'Delete',
+      danger: true,
+    })
+    if (!ok) return
     setBusy(true)
     try {
       await CategoryApi.remove(category.id)

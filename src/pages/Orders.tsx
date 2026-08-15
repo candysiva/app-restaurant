@@ -5,6 +5,7 @@ import { formatInr, formatQty, formatTime, todayIso, dateIso } from '../lib/form
 import { ApiError } from '../lib/api'
 import { CloseIcon } from '../components/icons'
 import { useCachedFetch } from '../lib/cache'
+import { useConfirm } from '../lib/confirm'
 
 type RangeTab = 'today' | 'week' | 'all'
 
@@ -119,13 +120,20 @@ function OrderDetailSheet({
 }) {
   const [lines, setLines] = useState<OrderItem[] | null>(null)
   const [busy, setBusy] = useState(false)
+  const confirmDialog = useConfirm()
 
   useEffect(() => {
     OrderItemApi.listByOrder(order.id).then(setLines)
   }, [order.id])
 
   async function cancelOrder() {
-    if (!confirm(`Cancel order #${order.orderNumber}? This can't be undone.`)) return
+    const ok = await confirmDialog({
+      title: `Cancel order #${order.orderNumber}?`,
+      message: "This can't be undone.",
+      confirmLabel: 'Cancel order',
+      danger: true,
+    })
+    if (!ok) return
     setBusy(true)
     try {
       const updated = await OrderApi.cancel(order.id)

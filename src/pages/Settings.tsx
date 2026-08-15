@@ -4,11 +4,17 @@ import { isOwner } from '../lib/types'
 import { LogoutIcon, MenuBookIcon, UsersIcon } from '../components/icons'
 import { StaffSheet } from './StaffSheet'
 import { CategoriesSheet } from './CategoriesSheet'
+import { useConfirm } from '../lib/confirm'
 
 export function Settings() {
   const { user, signOut } = useAuth()
   const [showStaff, setShowStaff] = useState(false)
   const [showCategories, setShowCategories] = useState(false)
+  const confirmDialog = useConfirm()
+
+  async function handleSignOut() {
+    if (await confirmDialog({ title: 'Sign out?', confirmLabel: 'Sign out' })) signOut()
+  }
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
@@ -58,7 +64,7 @@ export function Settings() {
 
         <section>
           <button
-            onClick={() => confirm('Sign out?') && signOut()}
+            onClick={handleSignOut}
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white py-3.5 text-sm font-semibold text-neutral-600 active:bg-neutral-50"
           >
             <LogoutIcon className="h-4 w-4" /> Sign out

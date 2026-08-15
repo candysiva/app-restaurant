@@ -4,6 +4,7 @@ import { isOwner, type Role, type StaffUser } from '../lib/types'
 import { ApiError } from '../lib/api'
 import { CloseIcon, TrashIcon } from '../components/icons'
 import { useAuth } from '../lib/auth'
+import { useConfirm } from '../lib/confirm'
 
 export function StaffSheet({ onClose }: { onClose: () => void }) {
   const { user: currentUser } = useAuth()
@@ -206,6 +207,7 @@ function EditStaffSheet({
   const [newPassword, setNewPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const confirmDialog = useConfirm()
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -234,7 +236,13 @@ function EditStaffSheet({
   }
 
   async function handleDelete() {
-    if (!confirm(`Remove ${staffMember.name}'s login? They won't be able to sign in anymore.`)) return
+    const ok = await confirmDialog({
+      title: `Remove ${staffMember.name}'s login?`,
+      message: "They won't be able to sign in anymore.",
+      confirmLabel: 'Remove',
+      danger: true,
+    })
+    if (!ok) return
     setBusy(true)
     try {
       await StaffApi.remove(staffMember.id)
