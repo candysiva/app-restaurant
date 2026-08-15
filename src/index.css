@@ -1,0 +1,62 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --color-brand-50: #fff7ed;
+  --color-brand-100: #ffedd5;
+  --color-brand-600: #dc2626;
+  --color-brand-700: #b91c1c;
+  --color-brand-800: #7f1d1d;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-brand-50);
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  background: #fefefe;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+input,
+select,
+button,
+textarea {
+  font-family: inherit;
+}
+
+* {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+@layer components {
+  .input {
+    @apply w-full rounded-xl border border-neutral-300 px-3 py-2.5 text-base text-neutral-900 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20;
+  }
+}
+
