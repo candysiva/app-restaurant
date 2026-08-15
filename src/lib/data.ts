@@ -111,14 +111,12 @@ export const StaffApi = {
   remove: (id: string) => api.del(`/users/${id}`),
 }
 
-const ORDER_COUNTER_KEY = 'sb_billing_order_counter'
-
-export function nextOrderNumber(orderDate: string): number {
-  const raw = localStorage.getItem(ORDER_COUNTER_KEY)
-  const state = raw ? (JSON.parse(raw) as { date: string; seq: number }) : null
-  const seq = state && state.date === orderDate ? state.seq + 1 : 1
-  localStorage.setItem(ORDER_COUNTER_KEY, JSON.stringify({ date: orderDate, seq }))
-  return seq
+// Reads today's highest order number from the shared backend rather than a local
+// counter, so every device/login continues the same sequence instead of each
+// starting its own count at 1 (which caused duplicate order numbers across logins).
+async function nextOrderNumber(orderDate: string): Promise<number> {
+  const todaysOrders = await OrderApi.listInRange(orderDate, orderDate)
+  return todaysOrders.reduce((max, o) => Math.max(max, o.orderNumber), 0) + 1
 }
 
 export interface CartLine {
@@ -137,7 +135,7 @@ export async function submitOrder(
   const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0)
 
   const order = await OrderApi.create({
-    orderNumber: nextOrderNumber(orderDate),
+    orderNumber: await nextOrderNumber(orderDate),
     status: 'completed',
     paymentMethod,
     total,

@@ -45,6 +45,10 @@ Menu categories (Tiffin, Batter, ...) are no longer fixed — owners manage them
 
 **Migrating from before this feature:** menu items created before categories existed won't have one assigned (they show up under "Uncategorized" in Menu and are only reachable via the "All" tab in Billing) — open each one and pick a category to file it properly.
 
+## Order numbers
+
+Bill numbers (`#1`, `#2`, ...) restart at 1 every calendar day and are shared across every login/device — placing a bill from any phone looks up today's highest existing order number from the backend and continues from there, so numbering stays consistent no matter who's ringing up the sale. Two devices checking out in the exact same instant could in theory land on the same number (there's no server-side atomic counter), but for a single-counter shop ringing up bills one at a time this is not a practical concern in normal use.
+
 ## Installing on a phone
 
 Open the deployed URL in Chrome (Android) or Safari (iOS) and use "Add to Home Screen" — it installs like a native app icon and launches full-screen.
