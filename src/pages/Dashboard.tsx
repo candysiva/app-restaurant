@@ -303,6 +303,16 @@ export function Dashboard() {
 function TrendChart({ data, caption }: { data: { day: string; label: string; sales: number }[]; caption?: string }) {
   const dense = data.length > 14
   const minWidth = dense ? Math.max(600, data.length * 26) : undefined
+  // Card content is ~320px wide on a phone after padding; use that as the
+  // budget when the chart isn't scrollable, or the scrollable width otherwise.
+  // Space needed per label scales with how long the labels actually are
+  // ("Mon" needs far less room than "16 Feb"), so short weekday-abbreviation
+  // charts don't get thinned unnecessarily.
+  const chartWidth = minWidth ?? 320
+  const maxLabelLength = Math.max(1, ...data.map((d) => d.label.length))
+  const pxPerLabel = maxLabelLength * 6.5 + 16
+  const maxLabels = Math.max(4, Math.floor(chartWidth / pxPerLabel))
+  const tickInterval = data.length > maxLabels ? Math.ceil(data.length / maxLabels) - 1 : 0
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-3">
@@ -319,7 +329,7 @@ function TrendChart({ data, caption }: { data: { day: string; label: string; sal
                   tick={{ fontSize: 11, fill: '#9ca3af' }}
                   axisLine={{ stroke: '#e5e7eb' }}
                   tickLine={false}
-                  interval={data.length > 20 ? Math.floor(data.length / 12) : 0}
+                  interval={tickInterval}
                 />
                 <YAxis
                   tick={{ fontSize: 11, fill: '#9ca3af' }}
