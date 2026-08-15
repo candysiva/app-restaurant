@@ -4,38 +4,35 @@ import type { Order, OrderItem } from '../lib/types'
 import { formatInr, formatQty, formatTime, todayIso, dateIso } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { CloseIcon } from '../components/icons'
+import { useCachedFetch } from '../lib/cache'
 
 type RangeTab = 'today' | 'week' | 'all'
 
+const EMPTY_ORDERS: Order[] = []
+
+async function fetchOrders(range: RangeTab): Promise<Order[]> {
+  if (range === 'all') return OrderApi.listRecent()
+  const to = todayIso()
+  const from = range === 'today' ? to : dateIso(new Date(Date.now() - 6 * 86400000))
+  const data = await OrderApi.listInRange(from, to)
+  return data.sort((a, b) => b.orderDatetime.localeCompare(a.orderDatetime))
+}
+
 export function Orders() {
   const [range, setRange] = useState<RangeTab>('today')
-  const [orders, setOrders] = useState<Order[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    data: rawOrders,
+    loading: ordersLoading,
+    error: ordersError,
+    mutate: mutateOrders,
+  } = useCachedFetch(`orders:${range}`, () => fetchOrders(range))
   const [viewing, setViewing] = useState<Order | null>(null)
 
-  useEffect(() => {
-    setOrders(null)
-    setError(null)
-    const load = async () => {
-      try {
-        if (range === 'all') {
-          setOrders(await OrderApi.listRecent())
-        } else {
-          const to = todayIso()
-          const from = range === 'today' ? to : dateIso(new Date(Date.now() - 6 * 86400000))
-          const data = await OrderApi.listInRange(from, to)
-          data.sort((a, b) => b.orderDatetime.localeCompare(a.orderDatetime))
-          setOrders(data)
-        }
-      } catch (err) {
-        setError(err instanceof ApiError ? err.message : 'Could not load orders')
-      }
-    }
-    load()
-  }, [range])
+  const orders = rawOrders ?? EMPTY_ORDERS
+  const error = ordersError ? (ordersError instanceof ApiError ? ordersError.message : 'Could not load orders') : null
 
   const dayTotal = useMemo(
-    () => (orders ?? []).filter((o) => o.status === 'completed').reduce((sum, o) => sum + o.total, 0),
+    () => orders.filter((o) => o.status === 'completed').reduce((sum, o) => sum + o.total, 0),
     [orders],
   )
 
@@ -58,7 +55,7 @@ export function Orders() {
         </div>
       </header>
 
-      {orders && orders.length > 0 && (
+      {orders.length > 0 && (
         <div className="flex items-center justify-between bg-brand-50 px-4 py-2.5 text-sm">
           <span className="text-neutral-600">{orders.length} bill{orders.length === 1 ? '' : 's'}</span>
           <span className="font-bold text-brand-700">{formatInr(dayTotal)}</span>
@@ -66,13 +63,15 @@ export function Orders() {
       )}
 
       {error && <p className="m-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      {orders === null && !error && <p className="p-6 text-center text-sm text-neutral-400">Loading orders…</p>}
-      {orders !== null && orders.length === 0 && (
+      {ordersLoading && orders.length === 0 && !error && (
+        <p className="p-6 text-center text-sm text-neutral-400">Loading orders…</p>
+      )}
+      {!ordersLoading && orders.length === 0 && (
         <p className="p-8 text-center text-sm text-neutral-400">No bills in this period.</p>
       )}
 
       <div className="flex-1 divide-y divide-neutral-100 px-4">
-        {orders?.map((order) => (
+        {orders.map((order) => (
           <button
             key={order.id}
             onClick={() => setViewing(order)}
@@ -100,7 +99,7 @@ export function Orders() {
           order={viewing}
           onClose={() => setViewing(null)}
           onCancelled={(updated) => {
-            setOrders((prev) => prev?.map((o) => (o.id === updated.id ? updated : o)) ?? null)
+            mutateOrders((prev) => (prev ?? []).map((o) => (o.id === updated.id ? updated : o)))
             setViewing(updated)
           }}
         />

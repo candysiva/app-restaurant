@@ -1,11 +1,28 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
 import { OrderApi, OrderItemApi } from '../lib/data'
 import type { Order, OrderItem } from '../lib/types'
 import { dateIso, formatDateLabel, formatInr, todayIso } from '../lib/format'
 import { ApiError } from '../lib/api'
+import { useCachedFetch } from '../lib/cache'
 
 type Period = 'today' | 'week' | 'month'
+
+const EMPTY_ORDERS: Order[] = []
+const EMPTY_LINE_ITEMS: OrderItem[] = []
+
+interface DashboardData {
+  orders: Order[]
+  lineItems: OrderItem[]
+}
+
+async function fetchDashboardData(from: string, to: string): Promise<DashboardData> {
+  const [orders, lineItems] = await Promise.all([
+    OrderApi.listInRange(from, to),
+    OrderItemApi.listInRange(from, to),
+  ])
+  return { orders, lineItems }
+}
 
 const BRAND = '#b91c1c'
 const BRAND_LIGHT = '#fee2e2'
@@ -31,31 +48,25 @@ function rangeFor(period: Period): { from: string; to: string; days: string[] } 
 
 export function Dashboard() {
   const [period, setPeriod] = useState<Period>('today')
-  const [orders, setOrders] = useState<Order[] | null>(null)
-  const [lineItems, setLineItems] = useState<OrderItem[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
   const { from, to, days } = useMemo(() => rangeFor(period), [period])
 
-  useEffect(() => {
-    setOrders(null)
-    setLineItems(null)
-    setError(null)
-    Promise.all([OrderApi.listInRange(from, to), OrderItemApi.listInRange(from, to)])
-      .then(([o, li]) => {
-        setOrders(o)
-        setLineItems(li)
-      })
-      .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load dashboard data'))
-  }, [from, to])
+  const {
+    data,
+    loading,
+    error: fetchError,
+  } = useCachedFetch(`dashboard:${period}`, () => fetchDashboardData(from, to))
+  const error = fetchError ? (fetchError instanceof ApiError ? fetchError.message : 'Could not load dashboard data') : null
 
-  const completedOrders = useMemo(() => (orders ?? []).filter((o) => o.status === 'completed'), [orders])
+  const orders = data?.orders ?? EMPTY_ORDERS
+  const lineItems = data?.lineItems ?? EMPTY_LINE_ITEMS
+
+  const completedOrders = useMemo(() => orders.filter((o) => o.status === 'completed'), [orders])
   const cancelledIds = useMemo(
-    () => new Set((orders ?? []).filter((o) => o.status === 'cancelled').map((o) => o.id)),
+    () => new Set(orders.filter((o) => o.status === 'cancelled').map((o) => o.id)),
     [orders],
   )
   const validLineItems = useMemo(
-    () => (lineItems ?? []).filter((li) => !cancelledIds.has(li.order.id)),
+    () => lineItems.filter((li) => !cancelledIds.has(li.order.id)),
     [lineItems, cancelledIds],
   )
 
@@ -92,7 +103,6 @@ export function Dashboard() {
   }, [validLineItems])
 
   const maxItemRevenue = itemStats[0]?.revenue ?? 0
-  const loading = orders === null || lineItems === null
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">

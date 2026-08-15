@@ -1,37 +1,39 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { CategoryApi, MenuApi, submitOrder, type CartLine } from '../lib/data'
-import type { CategoryItem, MenuItem, PaymentMethod } from '../lib/types'
+import type { MenuItem, PaymentMethod } from '../lib/types'
 import { formatInr } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { CloseIcon, MinusIcon, PlusIcon } from '../components/icons'
+import { useCachedFetch } from '../lib/cache'
 
 const ALL_TAB = 'all'
 
 export function Billing() {
-  const [items, setItems] = useState<MenuItem[] | null>(null)
-  const [categories, setCategories] = useState<CategoryItem[]>([])
-  const [error, setError] = useState<string | null>(null)
+  const { data: allItems, loading: itemsLoading, error: itemsError } = useCachedFetch('menu-items', MenuApi.list)
+  const { data: allCategories } = useCachedFetch('categories', CategoryApi.list)
   const [tab, setTab] = useState<string>(ALL_TAB)
   const [cart, setCart] = useState<Record<string, number>>({})
   const [weighing, setWeighing] = useState<MenuItem | null>(null)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [receipt, setReceipt] = useState<{ orderNumber: number; total: number } | null>(null)
 
-  useEffect(() => {
-    Promise.all([MenuApi.list(), CategoryApi.list()])
-      .then(([data, cats]) => {
-        setItems(data.filter((i) => i.active).sort((a, b) => a.name.localeCompare(b.name)))
-        setCategories(cats.sort((a, b) => a.name.localeCompare(b.name)))
-      })
-      .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load menu'))
-  }, [])
+  const error = itemsError ? (itemsError instanceof ApiError ? itemsError.message : 'Could not load menu') : null
+
+  const items = useMemo(
+    () => (allItems ?? []).filter((i) => i.active).sort((a, b) => a.name.localeCompare(b.name)),
+    [allItems],
+  )
+  const categories = useMemo(
+    () => (allCategories ?? []).slice().sort((a, b) => a.name.localeCompare(b.name)),
+    [allCategories],
+  )
 
   const visibleItems = useMemo(
-    () => (items ?? []).filter((i) => tab === ALL_TAB || i.category?.id === tab),
+    () => items.filter((i) => tab === ALL_TAB || i.category?.id === tab),
     [items, tab],
   )
 
-  const itemsById = useMemo(() => new Map((items ?? []).map((i) => [i.id, i])), [items])
+  const itemsById = useMemo(() => new Map(items.map((i) => [i.id, i])), [items])
 
   const cartLines: CartLine[] = useMemo(
     () =>
@@ -93,8 +95,10 @@ export function Billing() {
       </header>
 
       {error && <p className="m-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      {items === null && !error && <p className="p-6 text-center text-sm text-neutral-400">Loading menu…</p>}
-      {items !== null && visibleItems.length === 0 && (
+      {itemsLoading && items.length === 0 && !error && (
+        <p className="p-6 text-center text-sm text-neutral-400">Loading menu…</p>
+      )}
+      {!itemsLoading && visibleItems.length === 0 && (
         <p className="p-8 text-center text-sm text-neutral-400">No items in this category yet.</p>
       )}
 

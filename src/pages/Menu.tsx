@@ -1,52 +1,51 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useState } from 'react'
+import type { FormEvent } from 'react'
 import { CategoryApi, MenuApi } from '../lib/data'
 import type { CategoryItem, MenuItem, PriceType } from '../lib/types'
 import { formatInr } from '../lib/format'
 import { PlusIcon, CloseIcon, TrashIcon } from '../components/icons'
 import { ApiError } from '../lib/api'
+import { useCachedFetch } from '../lib/cache'
 
 const UNCATEGORIZED = '__uncategorized__'
 
 export function Menu() {
-  const [items, setItems] = useState<MenuItem[] | null>(null)
-  const [categories, setCategories] = useState<CategoryItem[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const { data: rawItems, loading: itemsLoading, error: itemsError, mutate: mutateItems } = useCachedFetch(
+    'menu-items',
+    MenuApi.list,
+  )
+  const { data: rawCategories } = useCachedFetch('categories', CategoryApi.list)
   const [editing, setEditing] = useState<MenuItem | 'new' | null>(null)
 
-  async function load() {
-    try {
-      const [data, cats] = await Promise.all([MenuApi.list(), CategoryApi.list()])
-      data.sort((a, b) => a.name.localeCompare(b.name))
-      cats.sort((a, b) => a.name.localeCompare(b.name))
-      setItems(data)
-      setCategories(cats)
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not load menu')
-    }
-  }
+  const error = itemsError ? (itemsError instanceof ApiError ? itemsError.message : 'Could not load menu') : null
 
-  useEffect(() => {
-    load()
-  }, [])
+  const items = useMemo(
+    () => (rawItems ?? []).slice().sort((a, b) => a.name.localeCompare(b.name)),
+    [rawItems],
+  )
+  const categories = useMemo(
+    () => (rawCategories ?? []).slice().sort((a, b) => a.name.localeCompare(b.name)),
+    [rawCategories],
+  )
 
   const grouped = useMemo(() => {
     const map = new Map<string, MenuItem[]>()
-    for (const cat of categories ?? []) map.set(cat.id, [])
+    for (const cat of categories) map.set(cat.id, [])
     map.set(UNCATEGORIZED, [])
-    for (const item of items ?? []) map.get(item.category?.id ?? UNCATEGORIZED)?.push(item)
+    for (const item of items) map.get(item.category?.id ?? UNCATEGORIZED)?.push(item)
     return map
   }, [items, categories])
 
   async function toggleActive(item: MenuItem) {
-    setItems((prev) => prev?.map((i) => (i.id === item.id ? { ...i, active: !i.active } : i)) ?? null)
+    mutateItems((prev) => (prev ?? []).map((i) => (i.id === item.id ? { ...i, active: !i.active } : i)))
     try {
       await MenuApi.update(item.id, { active: !item.active })
     } catch {
-      load()
+      mutateItems((prev) => (prev ?? []).map((i) => (i.id === item.id ? { ...i, active: item.active } : i)))
     }
   }
 
-  const noCategories = categories !== null && categories.length === 0
+  const noCategories = rawCategories !== null && rawCategories.length === 0
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
@@ -69,16 +68,18 @@ export function Menu() {
         </p>
       )}
 
-      {items === null && !error && <p className="p-6 text-center text-sm text-neutral-400">Loading menu…</p>}
+      {itemsLoading && items.length === 0 && !error && (
+        <p className="p-6 text-center text-sm text-neutral-400">Loading menu…</p>
+      )}
 
-      {items !== null && items.length === 0 && !noCategories && (
+      {!itemsLoading && items.length === 0 && !noCategories && (
         <div className="p-8 text-center text-sm text-neutral-400">
           No items yet. Tap "Add item" to build your menu.
         </div>
       )}
 
       <div className="flex-1 space-y-5 p-4">
-        {(categories ?? []).map((cat) => {
+        {categories.map((cat) => {
           const catItems = grouped.get(cat.id) ?? []
           if (catItems.length === 0) return null
           return (
@@ -108,18 +109,18 @@ export function Menu() {
       {editing && (
         <MenuItemSheet
           item={editing === 'new' ? null : editing}
-          categories={categories ?? []}
+          categories={categories}
           onClose={() => setEditing(null)}
           onSaved={(saved) => {
-            setItems((prev) => {
-              if (!prev) return [saved]
-              const exists = prev.some((i) => i.id === saved.id)
-              return exists ? prev.map((i) => (i.id === saved.id ? saved : i)) : [...prev, saved]
+            mutateItems((prev) => {
+              const list = prev ?? []
+              const exists = list.some((i) => i.id === saved.id)
+              return exists ? list.map((i) => (i.id === saved.id ? saved : i)) : [...list, saved]
             })
             setEditing(null)
           }}
           onDeleted={(id) => {
-            setItems((prev) => prev?.filter((i) => i.id !== id) ?? null)
+            mutateItems((prev) => (prev ?? []).filter((i) => i.id !== id))
             setEditing(null)
           }}
           onToggleActive={toggleActive}
