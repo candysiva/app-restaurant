@@ -53,3 +53,12 @@ export interface AuthResponse {
   jwt: string
   user: AuthUser
 }
+
+export interface StaffUser {
+  id: string
+  name: string
+  email?: string
+  phone?: string
+  username?: string
+  _createdAt?: string
+}

@@ -3,8 +3,9 @@ import { OrderApi, OrderItemApi } from '../lib/data'
 import type { Order, OrderItem } from '../lib/types'
 import { formatInr, formatQty, formatTime, todayIso, dateIso } from '../lib/format'
 import { ApiError } from '../lib/api'
-import { CloseIcon, LogoutIcon } from '../components/icons'
+import { CloseIcon, LogoutIcon, UsersIcon } from '../components/icons'
 import { useAuth } from '../lib/auth'
+import { StaffSheet } from './StaffSheet'
 
 type RangeTab = 'today' | 'week' | 'all'
 
@@ -14,6 +15,7 @@ export function Orders() {
   const [orders, setOrders] = useState<Order[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [viewing, setViewing] = useState<Order | null>(null)
+  const [showStaff, setShowStaff] = useState(false)
 
   useEffect(() => {
     setOrders(null)
@@ -46,12 +48,20 @@ export function Orders() {
       <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white px-4 py-3">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold text-neutral-900">Orders</h1>
-          <button
-            onClick={() => confirm('Sign out?') && signOut()}
-            className="flex items-center gap-1 text-sm font-medium text-neutral-400"
-          >
-            <LogoutIcon className="h-4 w-4" /> Sign out
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowStaff(true)}
+              className="flex items-center gap-1 text-sm font-medium text-neutral-400"
+            >
+              <UsersIcon className="h-4 w-4" /> Staff
+            </button>
+            <button
+              onClick={() => confirm('Sign out?') && signOut()}
+              className="flex items-center gap-1 text-sm font-medium text-neutral-400"
+            >
+              <LogoutIcon className="h-4 w-4" /> Sign out
+            </button>
+          </div>
         </div>
         <div className="mt-2 flex gap-1.5">
           {(['today', 'week', 'all'] as RangeTab[]).map((t) => (
@@ -115,6 +125,8 @@ export function Orders() {
           }}
         />
       )}
+
+      {showStaff && <StaffSheet onClose={() => setShowStaff(false)} />}
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 A fast, mobile-first billing app for a South Indian tiffin counter and rice flour batter (maavu) retail shop. Built as a PWA (installable from the browser, no app store needed) with an [Aaly](https://aaly.io) backend.
 
-**Live:** https://candysiva.github.io/app-restaurant/ (see [Deployment](#deployment) below — Pages needs a one-time enable in repo settings before the first deploy goes live).
+**Live:** https://candysiva.github.io/app-restaurant/
 
 ## v1 scope
 
@@ -30,7 +30,11 @@ npm run lint     # oxlint
 
 ## First-time setup (one time only)
 
-The backend project starts with no users. On first launch, use the **First-time setup** tab on the login screen to create the shop's account (this also creates the shop's tenant). After that, everyone at the counter signs in with that same email/phone + password — the backend does not support self-service signup for additional accounts on a single-tenant project.
+The backend project starts with no users. On first launch, use the **First-time setup** tab on the login screen to create the shop's account (this also creates the shop's tenant/shared workspace).
+
+## Adding staff logins
+
+After first-time setup, additional staff get their own login (name + email/phone + password) from **Orders → Staff** in the app — no separate signup needed. Everyone added this way shares the same shop data (menu, orders, dashboard).
 
 ## Installing on a phone
 

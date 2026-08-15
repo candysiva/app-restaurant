@@ -84,6 +84,26 @@ export function TrashIcon({ className }: IconProps) {
   )
 }
 
+export function UsersIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="9" cy="8" r="3.25" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M3.5 19c0-3.038 2.462-5.5 5.5-5.5s5.5 2.462 5.5 5.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M15.5 6.5c1.5.4 2.5 1.7 2.5 3.25S17 12.6 15.5 13M18.5 19c0-2.5-1.6-4.6-3.8-5.35"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 export function LogoutIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
