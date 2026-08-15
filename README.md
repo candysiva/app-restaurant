@@ -9,7 +9,7 @@ A fast, mobile-first billing app for a South Indian tiffin counter and rice flou
 - **Menu** — fixed-price items (idly, dosa, parotta, ...) and per-kg items (batter/maavu), grouped by owner-managed categories.
 - **Billing** — tap-to-add for fixed items, quick weight entry for per-kg items, one-tap checkout with payment method.
 - **Orders** — today / last 7 days / recent history, line-item detail, cancel a bill.
-- **Dashboard** (owner-only) — daily / weekly / monthly sales totals, bill count, average bill, item-wise sales ranking.
+- **Dashboard** (owner-only) — sales totals and item-wise ranking over today / week / 1-12 months / a custom number of months; trend chart by calendar date or by weekday (e.g. every Saturday's sales across a quarter).
 - **Settings** — account info, categories, staff logins (owner-only sections), sign out.
 
 Vendor management, procurement, raw materials, and spend-vs-profit are intentionally out of scope for v1 (planned for a later version).

@@ -6,7 +6,36 @@ import { dateIso, formatDateLabel, formatInr, todayIso } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { useCachedFetch } from '../lib/cache'
 
-type Period = 'today' | 'week' | 'month'
+type Period = 'today' | 'week' | '1m' | '2m' | '3m' | '6m' | '12m' | 'custom'
+type ViewMode = 'date' | 'weekday'
+type WeekdayFilter = 'all' | number
+
+const MONTHS_BY_PERIOD: Partial<Record<Period, number>> = { '1m': 1, '2m': 2, '3m': 3, '6m': 6, '12m': 12 }
+const PERIOD_LABEL: Record<Period, string> = {
+  today: 'Today',
+  week: 'Week',
+  '1m': '1M',
+  '2m': '2M',
+  '3m': '3M',
+  '6m': '6M',
+  '12m': '1Y',
+  custom: 'Custom',
+}
+
+// Monday-first display order; each entry is the value JS Date#getDay() returns for that weekday.
+const WEEKDAYS: { label: string; fullLabel: string; jsDay: number }[] = [
+  { label: 'Mon', fullLabel: 'Monday', jsDay: 1 },
+  { label: 'Tue', fullLabel: 'Tuesday', jsDay: 2 },
+  { label: 'Wed', fullLabel: 'Wednesday', jsDay: 3 },
+  { label: 'Thu', fullLabel: 'Thursday', jsDay: 4 },
+  { label: 'Fri', fullLabel: 'Friday', jsDay: 5 },
+  { label: 'Sat', fullLabel: 'Saturday', jsDay: 6 },
+  { label: 'Sun', fullLabel: 'Sunday', jsDay: 0 },
+]
+
+function weekdayOf(iso: string): number {
+  return new Date(`${iso}T00:00:00`).getDay()
+}
 
 const EMPTY_ORDERS: Order[] = []
 const EMPTY_LINE_ITEMS: OrderItem[] = []
@@ -27,7 +56,7 @@ async function fetchDashboardData(from: string, to: string): Promise<DashboardDa
 const BRAND = '#b91c1c'
 const BRAND_LIGHT = '#fee2e2'
 
-function rangeFor(period: Period): { from: string; to: string; days: string[] } {
+function rangeFor(period: Period, customMonths: number): { from: string; to: string; days: string[] } {
   const to = new Date()
   const toIso = todayIso()
   if (period === 'today') return { from: toIso, to: toIso, days: [toIso] }
@@ -38,23 +67,31 @@ function rangeFor(period: Period): { from: string; to: string; days: string[] } 
     return { from: days[0], to: toIso, days }
   }
 
-  const firstOfMonth = new Date(to.getFullYear(), to.getMonth(), 1)
+  const months = period === 'custom' ? customMonths : (MONTHS_BY_PERIOD[period] ?? 1)
+  const from = new Date(to)
+  from.setMonth(from.getMonth() - months)
+  from.setDate(from.getDate() + 1)
   const days: string[] = []
-  for (let d = new Date(firstOfMonth); d <= to; d.setDate(d.getDate() + 1)) {
+  for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
     days.push(dateIso(d))
   }
-  return { from: dateIso(firstOfMonth), to: toIso, days }
+  return { from: dateIso(from), to: toIso, days }
 }
 
 export function Dashboard() {
   const [period, setPeriod] = useState<Period>('today')
-  const { from, to, days } = useMemo(() => rangeFor(period), [period])
+  const [customMonths, setCustomMonths] = useState(4)
+  const [viewMode, setViewMode] = useState<ViewMode>('date')
+  const [weekdayFilter, setWeekdayFilter] = useState<WeekdayFilter>('all')
 
+  const { from, to, days } = useMemo(() => rangeFor(period, customMonths), [period, customMonths])
+
+  const cacheKey = period === 'custom' ? `dashboard:custom:${customMonths}` : `dashboard:${period}`
   const {
     data,
     loading,
     error: fetchError,
-  } = useCachedFetch(`dashboard:${period}`, () => fetchDashboardData(from, to))
+  } = useCachedFetch(cacheKey, () => fetchDashboardData(from, to))
   const error = fetchError ? (fetchError instanceof ApiError ? fetchError.message : 'Could not load dashboard data') : null
 
   const orders = data?.orders ?? EMPTY_ORDERS
@@ -80,6 +117,24 @@ export function Dashboard() {
     for (const o of completedOrders) byDay.set(o.orderDate, (byDay.get(o.orderDate) ?? 0) + o.total)
     return days.map((d) => ({ day: d, label: formatDateLabel(d), sales: byDay.get(d) ?? 0 }))
   }, [days, completedOrders])
+
+  const weekdayAggData = useMemo(() => {
+    const sums = new Array(7).fill(0)
+    for (const o of completedOrders) sums[weekdayOf(o.orderDate)] += o.total
+    return WEEKDAYS.map(({ label, jsDay }) => ({ day: label, label, sales: sums[jsDay] }))
+  }, [completedOrders])
+
+  const weekdayTrendData = useMemo(() => {
+    if (weekdayFilter === 'all') return []
+    const matchingDates = days.filter((d) => weekdayOf(d) === weekdayFilter)
+    const byDate = new Map<string, number>()
+    for (const o of completedOrders) byDate.set(o.orderDate, (byDate.get(o.orderDate) ?? 0) + o.total)
+    return matchingDates.map((d) => ({ day: d, label: formatDateLabel(d), sales: byDate.get(d) ?? 0 }))
+  }, [days, completedOrders, weekdayFilter])
+
+  const weekdayChartData = weekdayFilter === 'all' ? weekdayAggData : weekdayTrendData
+  const weekdayChartLabel =
+    weekdayFilter === 'all' ? 'By weekday' : `Every ${WEEKDAYS.find((w) => w.jsDay === weekdayFilter)?.fullLabel}`
 
   const itemStats = useMemo(() => {
     const byItem = new Map<string, { name: string; category: string; revenue: number; qty: number; priceType: string }>()
@@ -108,19 +163,32 @@ export function Dashboard() {
     <div className="flex min-h-full flex-col bg-neutral-50">
       <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white px-4 py-3">
         <h1 className="text-lg font-bold text-neutral-900">Dashboard</h1>
-        <div className="mt-2 flex gap-1.5">
-          {(['today', 'week', 'month'] as Period[]).map((p) => (
+        <div className="no-scrollbar mt-2 flex gap-1.5 overflow-x-auto pb-1">
+          {(Object.keys(PERIOD_LABEL) as Period[]).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium ${
+              className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium ${
                 period === p ? 'bg-brand-700 text-white' : 'bg-neutral-100 text-neutral-600'
               }`}
             >
-              {p === 'today' ? 'Today' : p === 'week' ? 'This week' : 'This month'}
+              {PERIOD_LABEL[p]}
             </button>
           ))}
         </div>
+        {period === 'custom' && (
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              type="number"
+              min={1}
+              max={36}
+              value={customMonths}
+              onChange={(e) => setCustomMonths(Math.min(36, Math.max(1, Number(e.target.value) || 1)))}
+              className="input w-20 py-1.5 text-sm"
+            />
+            <span className="text-sm text-neutral-500">months back</span>
+          </div>
+        )}
       </header>
 
       {error && <p className="m-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
@@ -136,29 +204,52 @@ export function Dashboard() {
 
           {period !== 'today' && (
             <section>
-              <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-400">Sales trend</h2>
-              <div className="rounded-xl border border-neutral-200 bg-white p-3">
-                <div className={period === 'month' ? 'min-w-[600px]' : ''} style={{ overflowX: 'auto' }}>
-                  <ResponsiveContainer width="100%" height={180} minWidth={period === 'month' ? 600 : undefined}>
-                    <BarChart data={trendData} barCategoryGap={period === 'month' ? '20%' : '30%'}>
-                      <XAxis
-                        dataKey="label"
-                        tick={{ fontSize: 11, fill: '#9ca3af' }}
-                        axisLine={{ stroke: '#e5e7eb' }}
-                        tickLine={false}
-                        interval={period === 'month' ? 2 : 0}
-                      />
-                      <Tooltip
-                        cursor={{ fill: BRAND_LIGHT }}
-                        formatter={(v) => [formatInr(Number(v)), 'Sales']}
-                        labelStyle={{ color: '#111827', fontWeight: 600 }}
-                        contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
-                      />
-                      <Bar dataKey="sales" fill={BRAND} radius={[4, 4, 0, 0]} maxBarSize={28} />
-                    </BarChart>
-                  </ResponsiveContainer>
+              <div className="mb-2 flex items-center justify-between">
+                <h2 className="text-xs font-bold uppercase tracking-wide text-neutral-400">Sales trend</h2>
+                <div className="flex rounded-lg bg-neutral-100 p-0.5 text-xs font-medium">
+                  <button
+                    onClick={() => setViewMode('date')}
+                    className={`rounded-md px-2.5 py-1 ${viewMode === 'date' ? 'bg-white text-brand-700 shadow-sm' : 'text-neutral-500'}`}
+                  >
+                    By date
+                  </button>
+                  <button
+                    onClick={() => setViewMode('weekday')}
+                    className={`rounded-md px-2.5 py-1 ${viewMode === 'weekday' ? 'bg-white text-brand-700 shadow-sm' : 'text-neutral-500'}`}
+                  >
+                    By weekday
+                  </button>
                 </div>
               </div>
+
+              {viewMode === 'weekday' && (
+                <div className="no-scrollbar mb-2 flex gap-1.5 overflow-x-auto pb-1">
+                  <button
+                    onClick={() => setWeekdayFilter('all')}
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                      weekdayFilter === 'all' ? 'bg-brand-700 text-white' : 'bg-neutral-100 text-neutral-600'
+                    }`}
+                  >
+                    All days
+                  </button>
+                  {WEEKDAYS.map(({ label, jsDay }) => (
+                    <button
+                      key={jsDay}
+                      onClick={() => setWeekdayFilter(jsDay)}
+                      className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                        weekdayFilter === jsDay ? 'bg-brand-700 text-white' : 'bg-neutral-100 text-neutral-600'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <TrendChart
+                data={viewMode === 'date' ? trendData : weekdayChartData}
+                caption={viewMode === 'weekday' ? weekdayChartLabel : undefined}
+              />
             </section>
           )}
 
@@ -195,6 +286,43 @@ export function Dashboard() {
               </div>
             )}
           </section>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TrendChart({ data, caption }: { data: { day: string; label: string; sales: number }[]; caption?: string }) {
+  const dense = data.length > 14
+  const minWidth = dense ? Math.max(600, data.length * 26) : undefined
+
+  return (
+    <div className="rounded-xl border border-neutral-200 bg-white p-3">
+      {caption && <p className="mb-1 text-xs text-neutral-400">{caption}</p>}
+      {data.length === 0 ? (
+        <p className="py-8 text-center text-sm text-neutral-400">No data for this selection.</p>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <div style={{ minWidth: minWidth ? `${minWidth}px` : undefined }}>
+            <ResponsiveContainer width="100%" height={180} minWidth={minWidth}>
+              <BarChart data={data} barCategoryGap={dense ? '20%' : '30%'}>
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 11, fill: '#9ca3af' }}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                  tickLine={false}
+                  interval={data.length > 20 ? Math.floor(data.length / 12) : 0}
+                />
+                <Tooltip
+                  cursor={{ fill: BRAND_LIGHT }}
+                  formatter={(v) => [formatInr(Number(v)), 'Sales']}
+                  labelStyle={{ color: '#111827', fontWeight: 600 }}
+                  contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
+                />
+                <Bar dataKey="sales" fill={BRAND} radius={[4, 4, 0, 0]} maxBarSize={28} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       )}
     </div>
