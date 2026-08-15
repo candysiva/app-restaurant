@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { OrderApi, OrderItemApi } from '../lib/data'
 import type { Order, OrderItem } from '../lib/types'
 import { dateIso, formatDateLabel, formatInr, todayIso } from '../lib/format'
@@ -55,6 +55,14 @@ async function fetchDashboardData(from: string, to: string): Promise<DashboardDa
 
 const BRAND = '#b91c1c'
 const BRAND_LIGHT = '#fee2e2'
+
+// Compact axis labels: full rupee formatting (formatInr) is too wide for a
+// mobile Y axis, e.g. "₹1,25,000" — collapse to "₹1.25L" / "₹4.2k" instead.
+function formatAxisInr(value: number): string {
+  if (value >= 100000) return `₹${(value / 100000).toFixed(value % 100000 === 0 ? 0 : 1)}L`
+  if (value >= 1000) return `₹${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}k`
+  return `₹${value}`
+}
 
 function rangeFor(period: Period, customMonths: number): { from: string; to: string; days: string[] } {
   const to = new Date()
@@ -305,13 +313,21 @@ function TrendChart({ data, caption }: { data: { day: string; label: string; sal
         <div style={{ overflowX: 'auto' }}>
           <div style={{ minWidth: minWidth ? `${minWidth}px` : undefined }}>
             <ResponsiveContainer width="100%" height={180} minWidth={minWidth}>
-              <BarChart data={data} barCategoryGap={dense ? '20%' : '30%'}>
+              <BarChart data={data} barCategoryGap={dense ? '20%' : '30%'} margin={{ left: 4, right: 4, top: 4 }}>
                 <XAxis
                   dataKey="label"
                   tick={{ fontSize: 11, fill: '#9ca3af' }}
                   axisLine={{ stroke: '#e5e7eb' }}
                   tickLine={false}
                   interval={data.length > 20 ? Math.floor(data.length / 12) : 0}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: '#9ca3af' }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={44}
+                  tickFormatter={formatAxisInr}
+                  allowDecimals={false}
                 />
                 <Tooltip
                   cursor={{ fill: BRAND_LIGHT }}
