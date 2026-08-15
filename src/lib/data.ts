@@ -1,5 +1,5 @@
 import { api, qs } from './api'
-import type { MenuItem, Order, OrderItem, PaymentMethod, Role, StaffUser } from './types'
+import type { CategoryItem, MenuItem, Order, OrderItem, PaymentMethod, Role, StaffUser } from './types'
 
 async function fetchAll<T>(path: string, params: Record<string, string | number | boolean | undefined>): Promise<T[]> {
   const limit = 200
@@ -14,10 +14,58 @@ async function fetchAll<T>(path: string, params: Record<string, string | number 
   return out
 }
 
+interface RawMenuItem {
+  id: string
+  name: string
+  categoryRef?: { id: string; name?: string } | null
+  priceType: MenuItem['priceType']
+  price: number
+  active: boolean
+  _createdAt?: string
+}
+
+function toMenuItem(raw: RawMenuItem): MenuItem {
+  return {
+    id: raw.id,
+    name: raw.name,
+    category: raw.categoryRef ? { id: raw.categoryRef.id, name: raw.categoryRef.name ?? '' } : null,
+    priceType: raw.priceType,
+    price: raw.price,
+    active: raw.active,
+    _createdAt: raw._createdAt,
+  }
+}
+
+export const CategoryApi = {
+  list: () => api.get<CategoryItem>('/categories?limit=200'),
+  create: (name: string) => api.post<CategoryItem>('/categories', { name }),
+  update: (id: string, name: string) => api.patch<CategoryItem>(`/categories/${id}`, { name }),
+  remove: (id: string) => api.del(`/categories/${id}`),
+}
+
 export const MenuApi = {
-  list: () => api.get<MenuItem>('/menu_items?limit=200'),
-  create: (data: Omit<MenuItem, 'id'>) => api.post<MenuItem>('/menu_items', data),
-  update: (id: string, data: Partial<Omit<MenuItem, 'id'>>) => api.patch<MenuItem>(`/menu_items/${id}`, data),
+  list: async () => (await api.get<RawMenuItem>('/menu_items?limit=200')).map(toMenuItem),
+  create: async (data: { name: string; category: CategoryItem; priceType: MenuItem['priceType']; price: number; active: boolean }) =>
+    toMenuItem(
+      await api.post<RawMenuItem>('/menu_items', {
+        name: data.name,
+        categoryRef: { id: data.category.id },
+        priceType: data.priceType,
+        price: data.price,
+        active: data.active,
+      }),
+    ),
+  update: async (
+    id: string,
+    data: Partial<{ name: string; category: CategoryItem; priceType: MenuItem['priceType']; price: number; active: boolean }>,
+  ) => {
+    const body: Record<string, unknown> = { ...data }
+    if (data.category) {
+      body.categoryRef = { id: data.category.id }
+      delete body.category
+    }
+    return toMenuItem(await api.patch<RawMenuItem>(`/menu_items/${id}`, body))
+  },
   remove: (id: string) => api.del(`/menu_items/${id}`),
 }
 
@@ -37,6 +85,7 @@ export const OrderItemApi = {
     order: { id: string }
     menuItem: { id: string }
     itemName: string
+    categoryName: string
     priceType: string
     unitPrice: number
     quantity: number
@@ -96,6 +145,7 @@ export async function submitOrder(
         order: { id: order.id },
         menuItem: { id: line.menuItem.id },
         itemName: line.menuItem.name,
+        categoryName: line.menuItem.category?.name ?? 'Uncategorized',
         priceType: line.menuItem.priceType,
         unitPrice: line.menuItem.price,
         quantity: line.quantity,

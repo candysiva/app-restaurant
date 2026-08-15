@@ -71,7 +71,7 @@ export function Dashboard() {
   }, [days, completedOrders])
 
   const itemStats = useMemo(() => {
-    const byItem = new Map<string, { name: string; category?: string; revenue: number; qty: number; priceType: string }>()
+    const byItem = new Map<string, { name: string; category: string; revenue: number; qty: number; priceType: string }>()
     for (const li of validLineItems) {
       const key = li.itemName
       const existing = byItem.get(key)
@@ -81,7 +81,7 @@ export function Dashboard() {
       } else {
         byItem.set(key, {
           name: li.itemName,
-          category: li.menuItem?.category,
+          category: li.categoryName,
           revenue: li.lineTotal,
           qty: li.quantity,
           priceType: li.priceType,

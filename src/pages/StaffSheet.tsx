@@ -25,7 +25,7 @@ export function StaffSheet({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40" onClick={onClose}>
       <div
-        className="flex max-h-[85dvh] w-full max-w-[480px] flex-col rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)]"
+        className="flex max-h-[85dvh] w-full max-w-[480px] md:max-w-[600px] flex-col rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-neutral-100 p-5 pb-3">
@@ -248,7 +248,7 @@ function EditStaffSheet({
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40" onClick={onClose}>
       <div
-        className="w-full max-w-[480px] rounded-t-2xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+20px)]"
+        className="w-full max-w-[480px] md:max-w-[600px] rounded-t-2xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+20px)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">

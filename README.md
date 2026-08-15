@@ -6,10 +6,11 @@ A fast, mobile-first billing app for a South Indian tiffin counter and rice flou
 
 ## v1 scope
 
-- **Menu** — fixed-price items (idly, dosa, parotta, ...) and per-kg items (batter/maavu), grouped by category.
+- **Menu** — fixed-price items (idly, dosa, parotta, ...) and per-kg items (batter/maavu), grouped by owner-managed categories.
 - **Billing** — tap-to-add for fixed items, quick weight entry for per-kg items, one-tap checkout with payment method.
 - **Orders** — today / last 7 days / recent history, line-item detail, cancel a bill.
-- **Dashboard** — daily / weekly / monthly sales totals, bill count, average bill, item-wise sales ranking.
+- **Dashboard** (owner-only) — daily / weekly / monthly sales totals, bill count, average bill, item-wise sales ranking.
+- **Settings** — account info, categories, staff logins (owner-only sections), sign out.
 
 Vendor management, procurement, raw materials, and spend-vs-profit are intentionally out of scope for v1 (planned for a later version).
 
@@ -34,9 +35,15 @@ The backend project starts with no users. On first launch, use the **First-time 
 
 ## Staff logins and roles
 
-The first-time-setup account is the **owner**. From **Orders → Staff** (owners only), the owner can add teammates directly — no separate signup needed — edit their name/role/password, or remove their login. Everyone shares the same shop data (menu, orders), but the **Dashboard is owner-only**: staff logins don't see the sales tab in the nav, and are redirected away if they hit the URL directly.
+The first-time-setup account is the **owner**. From **Settings → Staff logins** (owners only), the owner can add teammates directly — no separate signup needed — edit their name/role/password, or remove their login. Everyone shares the same shop data (menu, orders), but the **Dashboard is owner-only**: staff logins don't see the sales tab in the nav, and are redirected away if they hit the URL directly.
 
 This role check is enforced in the app's UI/routing, not by the backend — every signed-in user's JWT can still reach the same data API. That's an acceptable tradeoff for a single small shop where everyone is trusted staff, but don't treat it as a security boundary against an untrusted user with API access.
+
+## Categories
+
+Menu categories (Tiffin, Batter, ...) are no longer fixed — owners manage them from **Settings → Categories**: add, rename, or delete (deleting is blocked while any menu item still uses that category, so items are never silently orphaned). New shops start with zero categories; the Categories screen offers a one-tap "add starter categories" shortcut, or add your own from scratch. A menu item needs at least one category to exist before you can add items in the Menu tab.
+
+**Migrating from before this feature:** menu items created before categories existed won't have one assigned (they show up under "Uncategorized" in Menu and are only reachable via the "All" tab in Billing) — open each one and pick a category to file it properly.
 
 ## Installing on a phone
 

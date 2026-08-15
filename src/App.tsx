@@ -7,6 +7,7 @@ import { Billing } from './pages/Billing'
 import { Menu } from './pages/Menu'
 import { Orders } from './pages/Orders'
 import { Dashboard } from './pages/Dashboard'
+import { Settings } from './pages/Settings'
 
 function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -59,6 +60,16 @@ export default function App() {
               <ProtectedRoute ownerOnly>
                 <AppShell>
                   <Dashboard />
+                </AppShell>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <AppShell>
+                  <Settings />
                 </AppShell>
               </ProtectedRoute>
             }

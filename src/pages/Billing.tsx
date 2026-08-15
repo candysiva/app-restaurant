@@ -1,30 +1,33 @@
 import { useEffect, useMemo, useState } from 'react'
-import { MenuApi, submitOrder, type CartLine } from '../lib/data'
-import type { Category, MenuItem, PaymentMethod } from '../lib/types'
+import { CategoryApi, MenuApi, submitOrder, type CartLine } from '../lib/data'
+import type { CategoryItem, MenuItem, PaymentMethod } from '../lib/types'
 import { formatInr } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { CloseIcon, MinusIcon, PlusIcon } from '../components/icons'
 
-const CATEGORIES: Category[] = ['Tiffin', 'Batter', 'Beverages', 'Others']
-const TABS: ('All' | Category)[] = ['All', ...CATEGORIES]
+const ALL_TAB = 'all'
 
 export function Billing() {
   const [items, setItems] = useState<MenuItem[] | null>(null)
+  const [categories, setCategories] = useState<CategoryItem[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [tab, setTab] = useState<(typeof TABS)[number]>('All')
+  const [tab, setTab] = useState<string>(ALL_TAB)
   const [cart, setCart] = useState<Record<string, number>>({})
   const [weighing, setWeighing] = useState<MenuItem | null>(null)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [receipt, setReceipt] = useState<{ orderNumber: number; total: number } | null>(null)
 
   useEffect(() => {
-    MenuApi.list()
-      .then((data) => setItems(data.filter((i) => i.active).sort((a, b) => a.name.localeCompare(b.name))))
+    Promise.all([MenuApi.list(), CategoryApi.list()])
+      .then(([data, cats]) => {
+        setItems(data.filter((i) => i.active).sort((a, b) => a.name.localeCompare(b.name)))
+        setCategories(cats.sort((a, b) => a.name.localeCompare(b.name)))
+      })
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load menu'))
   }, [])
 
   const visibleItems = useMemo(
-    () => (items ?? []).filter((i) => tab === 'All' || i.category === tab),
+    () => (items ?? []).filter((i) => tab === ALL_TAB || i.category?.id === tab),
     [items, tab],
   )
 
@@ -66,16 +69,24 @@ export function Billing() {
     <div className="flex min-h-full flex-col bg-neutral-50">
       <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white px-4 py-3">
         <h1 className="text-lg font-bold text-neutral-900">New Bill</h1>
-        <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
-          {TABS.map((t) => (
+        <div className="no-scrollbar mt-2 flex gap-1.5 overflow-x-auto pb-1">
+          <button
+            onClick={() => setTab(ALL_TAB)}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium ${
+              tab === ALL_TAB ? 'bg-brand-700 text-white' : 'bg-neutral-100 text-neutral-600'
+            }`}
+          >
+            All
+          </button>
+          {categories.map((c) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={c.id}
+              onClick={() => setTab(c.id)}
               className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium ${
-                tab === t ? 'bg-brand-700 text-white' : 'bg-neutral-100 text-neutral-600'
+                tab === c.id ? 'bg-brand-700 text-white' : 'bg-neutral-100 text-neutral-600'
               }`}
             >
-              {t}
+              {c.name}
             </button>
           ))}
         </div>
@@ -87,7 +98,7 @@ export function Billing() {
         <p className="p-8 text-center text-sm text-neutral-400">No items in this category yet.</p>
       )}
 
-      <div className="grid flex-1 grid-cols-2 content-start gap-2.5 p-3 pb-28">
+      <div className="grid flex-1 grid-cols-2 content-start gap-2.5 p-3 pb-28 md:grid-cols-3">
         {visibleItems.map((item) => {
           const qty = cart[item.id] ?? 0
           return (
@@ -227,7 +238,7 @@ function WeighSheet({
   return (
     <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40" onClick={onClose}>
       <div
-        className="w-full max-w-[480px] rounded-t-2xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+20px)]"
+        className="w-full max-w-[480px] md:max-w-[600px] rounded-t-2xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+20px)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -290,7 +301,7 @@ function CheckoutSheet({
   return (
     <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40" onClick={onClose}>
       <div
-        className="flex max-h-[85dvh] w-full max-w-[480px] flex-col rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)]"
+        className="flex max-h-[85dvh] w-full max-w-[480px] md:max-w-[600px] flex-col rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-neutral-100 p-5 pb-3">

@@ -1,12 +1,16 @@
 export type PriceType = 'fixed' | 'per_kg'
-export type Category = 'Tiffin' | 'Batter' | 'Beverages' | 'Others'
 export type PaymentMethod = 'cash' | 'upi' | 'card'
 export type OrderStatus = 'completed' | 'cancelled'
+
+export interface CategoryItem {
+  id: string
+  name: string
+}
 
 export interface MenuItem {
   id: string
   name: string
-  category: Category
+  category: CategoryItem | null
   priceType: PriceType
   price: number
   active: boolean
@@ -28,7 +32,6 @@ export interface Order {
 export interface OrderItemRef {
   id: string
   name?: string
-  category?: Category
 }
 
 export interface OrderItem {
@@ -36,6 +39,7 @@ export interface OrderItem {
   order: { id: string; orderNumber?: number; orderDate?: string }
   menuItem: OrderItemRef
   itemName: string
+  categoryName: string
   priceType: PriceType
   unitPrice: number
   quantity: number
