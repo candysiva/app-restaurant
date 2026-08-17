@@ -31,7 +31,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
 
-  if (res.status === 401) {
+  // Only treat a 401 as "your session expired" when we actually sent a token that
+  // got rejected. A 401 on /auth/signin or /auth/signup just means wrong credentials
+  // and must surface as a normal form error, not force-reload back to /login (which
+  // would silently swallow the error before the user ever saw it).
+  if (res.status === 401 && token) {
     clearToken()
     window.location.assign(`${import.meta.env.BASE_URL}login`)
     throw new ApiError(401, 'Session expired, please sign in again')
