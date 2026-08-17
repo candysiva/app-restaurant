@@ -33,7 +33,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (res.status === 401) {
     clearToken()
-    window.location.assign('/login')
+    window.location.assign(`${import.meta.env.BASE_URL}login`)
     throw new ApiError(401, 'Session expired, please sign in again')
   }
 
