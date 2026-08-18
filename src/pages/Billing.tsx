@@ -232,9 +232,20 @@ function WeighSheet({
   onClose: () => void
   onConfirm: (kg: number) => void
 }) {
+  const hasPresets = (item.presetAmounts?.length ?? 0) > 0
+  const [mode, setMode] = useState<'amount' | 'weight'>(hasPresets ? 'amount' : 'weight')
+
   const [kg, setKg] = useState(initialKg ? String(initialKg) : '')
-  const parsed = Number(kg)
-  const valid = kg.trim() !== '' && Number.isFinite(parsed) && parsed > 0
+  const parsedKg = Number(kg)
+  const validKg = kg.trim() !== '' && Number.isFinite(parsedKg) && parsedKg > 0
+
+  const [amount, setAmount] = useState('')
+  const parsedAmount = Number(amount)
+  const validAmount = amount.trim() !== '' && Number.isFinite(parsedAmount) && parsedAmount > 0
+  const kgFromAmount = validAmount ? Math.round((parsedAmount / item.price) * 1000) / 1000 : 0
+
+  const valid = mode === 'weight' ? validKg : validAmount && kgFromAmount > 0
+  const resultKg = mode === 'weight' ? parsedKg : kgFromAmount
 
   return (
     <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40" onClick={onClose}>
@@ -249,18 +260,73 @@ function WeighSheet({
           </button>
         </div>
         <p className="mb-3 text-sm text-neutral-500">{formatInr(item.price)} / kg</p>
-        <input
-          autoFocus
-          inputMode="decimal"
-          value={kg}
-          onChange={(e) => setKg(e.target.value)}
-          placeholder="Weight in kg, e.g. 1.5"
-          className="input text-lg"
-        />
-        {valid && <p className="mt-2 text-sm font-medium text-neutral-600">= {formatInr(parsed * item.price)}</p>}
+
+        <div className="mb-3 flex rounded-xl bg-neutral-100 p-1 text-sm font-medium">
+          <button
+            type="button"
+            onClick={() => setMode('amount')}
+            className={`flex-1 rounded-lg py-2 ${mode === 'amount' ? 'bg-white text-brand-700 shadow' : 'text-neutral-500'}`}
+          >
+            By amount (₹)
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('weight')}
+            className={`flex-1 rounded-lg py-2 ${mode === 'weight' ? 'bg-white text-brand-700 shadow' : 'text-neutral-500'}`}
+          >
+            By weight (kg)
+          </button>
+        </div>
+
+        {mode === 'amount' ? (
+          <>
+            {hasPresets && (
+              <div className="mb-2 flex flex-wrap gap-2">
+                {item.presetAmounts!.map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setAmount(String(preset))}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                      amount === String(preset) ? 'bg-brand-700 text-white' : 'bg-neutral-100 text-neutral-600'
+                    }`}
+                  >
+                    ₹{preset}
+                  </button>
+                ))}
+              </div>
+            )}
+            <input
+              autoFocus={!hasPresets}
+              inputMode="decimal"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="Custom amount in ₹, e.g. 50"
+              className="input text-lg"
+            />
+            {validAmount && (
+              <p className="mt-2 text-sm font-medium text-neutral-600">
+                = {kgFromAmount > 0 ? `${kgFromAmount} kg` : 'less than 0.001 kg'}
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <input
+              autoFocus
+              inputMode="decimal"
+              value={kg}
+              onChange={(e) => setKg(e.target.value)}
+              placeholder="Weight in kg, e.g. 1.5"
+              className="input text-lg"
+            />
+            {validKg && <p className="mt-2 text-sm font-medium text-neutral-600">= {formatInr(parsedKg * item.price)}</p>}
+          </>
+        )}
+
         <button
           disabled={!valid}
-          onClick={() => onConfirm(parsed)}
+          onClick={() => onConfirm(resultKg)}
           className="mt-4 w-full rounded-xl bg-brand-700 py-3 font-semibold text-white active:bg-brand-800 disabled:opacity-40"
         >
           Add to bill

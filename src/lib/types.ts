@@ -15,6 +15,8 @@ export interface MenuItem {
   priceType: PriceType
   price: number
   active: boolean
+  /** Preset ₹ amounts for quick per-kg billing (e.g. [20, 50, 100]); only meaningful when priceType is 'per_kg'. */
+  presetAmounts?: number[]
   _createdAt?: string
 }
 

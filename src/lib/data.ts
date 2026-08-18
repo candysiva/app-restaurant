@@ -21,6 +21,7 @@ interface RawMenuItem {
   priceType: MenuItem['priceType']
   price: number
   active: boolean
+  presetAmounts?: number[]
   _createdAt?: string
 }
 
@@ -32,6 +33,7 @@ function toMenuItem(raw: RawMenuItem): MenuItem {
     priceType: raw.priceType,
     price: raw.price,
     active: raw.active,
+    presetAmounts: raw.presetAmounts ?? [],
     _createdAt: raw._createdAt,
   }
 }
@@ -53,7 +55,14 @@ export function sortCategories(categories: CategoryItem[]): CategoryItem[] {
 
 export const MenuApi = {
   list: async () => (await api.get<RawMenuItem>('/menu_items?limit=200')).map(toMenuItem),
-  create: async (data: { name: string; category: CategoryItem; priceType: MenuItem['priceType']; price: number; active: boolean }) =>
+  create: async (data: {
+    name: string
+    category: CategoryItem
+    priceType: MenuItem['priceType']
+    price: number
+    active: boolean
+    presetAmounts?: number[]
+  }) =>
     toMenuItem(
       await api.post<RawMenuItem>('/menu_items', {
         name: data.name,
@@ -61,11 +70,19 @@ export const MenuApi = {
         priceType: data.priceType,
         price: data.price,
         active: data.active,
+        presetAmounts: data.presetAmounts ?? [],
       }),
     ),
   update: async (
     id: string,
-    data: Partial<{ name: string; category: CategoryItem; priceType: MenuItem['priceType']; price: number; active: boolean }>,
+    data: Partial<{
+      name: string
+      category: CategoryItem
+      priceType: MenuItem['priceType']
+      price: number
+      active: boolean
+      presetAmounts: number[]
+    }>,
   ) => {
     const body: Record<string, unknown> = { ...data }
     if (data.category) {

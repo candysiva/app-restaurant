@@ -163,9 +163,24 @@ function MenuItemSheet({
   const [categoryId, setCategoryId] = useState(item?.category?.id ?? categories[0]?.id ?? '')
   const [priceType, setPriceType] = useState<PriceType>(item?.priceType ?? 'fixed')
   const [price, setPrice] = useState(item ? String(item.price) : '')
+  const [presetAmounts, setPresetAmounts] = useState<number[]>(item?.presetAmounts ?? [])
+  const [presetInput, setPresetInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const confirmDialog = useConfirm()
+
+  function addPreset() {
+    const amount = Number(presetInput)
+    if (!Number.isFinite(amount) || amount <= 0) return
+    if (!presetAmounts.includes(amount)) {
+      setPresetAmounts((prev) => [...prev, amount].sort((a, b) => a - b))
+    }
+    setPresetInput('')
+  }
+
+  function removePreset(amount: number) {
+    setPresetAmounts((prev) => prev.filter((a) => a !== amount))
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -184,6 +199,7 @@ function MenuItemSheet({
           category,
           priceType,
           price: parsedPrice,
+          presetAmounts: priceType === 'per_kg' ? presetAmounts : [],
         })
         onSaved(updated)
       } else {
@@ -193,6 +209,7 @@ function MenuItemSheet({
           priceType,
           price: parsedPrice,
           active: true,
+          presetAmounts: priceType === 'per_kg' ? presetAmounts : [],
         })
         onSaved(created)
       }
@@ -283,6 +300,60 @@ function MenuItemSheet({
               />
             </label>
           </div>
+
+          {priceType === 'per_kg' && (
+            <div>
+              <span className="mb-1 block text-xs font-medium text-neutral-600">
+                Quick amounts for billing (₹, optional)
+              </span>
+              <p className="mb-2 text-xs text-neutral-400">
+                Shown as tap buttons when weighing this item — the kg is calculated for you.
+              </p>
+              {presetAmounts.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {presetAmounts.map((amount) => (
+                    <span
+                      key={amount}
+                      className="flex items-center gap-1 rounded-full bg-brand-50 py-1 pl-3 pr-1.5 text-sm font-medium text-brand-700"
+                    >
+                      ₹{amount}
+                      <button
+                        type="button"
+                        onClick={() => removePreset(amount)}
+                        aria-label={`Remove ₹${amount}`}
+                        className="flex h-4 w-4 items-center justify-center rounded-full text-brand-700/70 active:bg-brand-100"
+                      >
+                        <CloseIcon className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input
+                  className="input"
+                  inputMode="decimal"
+                  value={presetInput}
+                  onChange={(e) => setPresetInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addPreset()
+                    }
+                  }}
+                  placeholder="e.g. 50"
+                />
+                <button
+                  type="button"
+                  onClick={addPreset}
+                  disabled={!presetInput.trim()}
+                  className="shrink-0 rounded-xl bg-neutral-100 px-4 py-2.5 text-sm font-semibold text-neutral-600 active:bg-neutral-200 disabled:opacity-40"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          )}
 
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 

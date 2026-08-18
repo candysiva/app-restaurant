@@ -7,7 +7,7 @@ A fast, mobile-first billing app for a South Indian tiffin counter and rice flou
 ## v1 scope
 
 - **Menu** — fixed-price items (idly, dosa, parotta, ...) and per-kg items (batter/maavu), grouped by owner-managed categories.
-- **Billing** — tap-to-add for fixed items, quick weight entry for per-kg items, one-tap checkout with payment method.
+- **Billing** — tap-to-add for fixed items; for per-kg items, either weigh directly (kg → price) or tap a rupee amount (a preset or a custom one) and the kg is calculated for you — one-tap checkout with payment method.
 - **Orders** — today / last 7 days / recent history, line-item detail, cancel a bill.
 - **Dashboard** (owner-only) — sales totals and item-wise ranking over today / week / 1-12 months / a custom number of months; trend chart by calendar date or by weekday (e.g. every Saturday's sales across a quarter).
 - **Settings** — account info, categories, staff logins (owner-only sections), sign out.
@@ -44,6 +44,10 @@ This role check is enforced in the app's UI/routing, not by the backend — ever
 Menu categories (Tiffin, Batter, ...) are no longer fixed — owners manage them from **Settings → Categories**: add, rename, reorder, or delete (deleting is blocked while any menu item still uses that category, so items are never silently orphaned). Use the up/down arrows next to each category to reorder — this order controls the category tabs in Billing and the section order in Menu, so put your most-ordered category first for quicker tapping. New shops start with zero categories; the Categories screen offers a one-tap "add starter categories" shortcut, or add your own from scratch. A menu item needs at least one category to exist before you can add items in the Menu tab.
 
 **Migrating from before this feature:** menu items created before categories existed won't have one assigned (they show up under "Uncategorized" in Menu and are only reachable via the "All" tab in Billing) — open each one and pick a category to file it properly.
+
+## Per-kg items: billing by amount
+
+Per-kg items (batter/maavu) sell in fixed, per-item ₹/kg prices set in the Menu screen. Since customers often ask for a rounded rupee amount rather than an exact weight, each per-kg menu item can also have a handful of **quick amounts** (e.g. ₹20, ₹50, ₹100) set from its edit screen — Billing then shows those as tap buttons plus a custom-amount field, and the kg is calculated automatically from the item's price (rounded to the nearest gram). Precise weight entry ("By weight (kg)") is still available as the other tab in the same sheet for anything that doesn't fit a round amount.
 
 ## Order numbers
 
