@@ -1,11 +1,10 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './lib/auth'
 import { ConfirmProvider } from './lib/confirm'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { BottomNav } from './components/BottomNav'
 import { Login } from './pages/Login'
 import { Billing } from './pages/Billing'
-import { Menu } from './pages/Menu'
 import { Orders } from './pages/Orders'
 import { Expenses } from './pages/Expenses'
 import { Dashboard } from './pages/Dashboard'
@@ -37,16 +36,8 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/menu"
-              element={
-                <ProtectedRoute>
-                  <AppShell>
-                    <Menu />
-                  </AppShell>
-                </ProtectedRoute>
-              }
-            />
+            {/* Menu management moved into Settings — keep old bookmarks/links working. */}
+            <Route path="/menu" element={<Navigate to="/settings" replace />} />
             <Route
               path="/orders"
               element={

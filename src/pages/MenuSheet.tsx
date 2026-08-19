@@ -10,7 +10,7 @@ import { useConfirm } from '../lib/confirm'
 
 const UNCATEGORIZED = '__uncategorized__'
 
-export function Menu() {
+export function MenuSheet({ onClose }: { onClose: () => void }) {
   const { data: rawItems, loading: itemsLoading, error: itemsError, mutate: mutateItems } = useCachedFetch(
     'menu-items',
     MenuApi.list,
@@ -46,62 +46,74 @@ export function Menu() {
   const noCategories = rawCategories !== null && rawCategories.length === 0
 
   return (
-    <div className="flex min-h-full flex-col bg-neutral-50">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-200 bg-white px-4 py-3">
-        <h1 className="text-lg font-bold text-neutral-900">Menu</h1>
-        <button
-          onClick={() => setEditing('new')}
-          disabled={noCategories}
-          className="flex items-center gap-1 rounded-full bg-brand-700 px-3 py-1.5 text-sm font-semibold text-white active:bg-brand-800 disabled:opacity-40"
-        >
-          <PlusIcon className="h-4 w-4" /> Add item
-        </button>
-      </header>
-
-      {error && <p className="m-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-
-      {noCategories && (
-        <p className="m-4 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">
-          Add a category first — Settings → Categories — before adding menu items.
-        </p>
-      )}
-
-      {itemsLoading && items.length === 0 && !error && (
-        <p className="p-6 text-center text-sm text-neutral-400">Loading menu…</p>
-      )}
-
-      {!itemsLoading && items.length === 0 && !noCategories && (
-        <div className="p-8 text-center text-sm text-neutral-400">
-          No items yet. Tap "Add item" to build your menu.
+    <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40" onClick={onClose}>
+      <div
+        className="flex max-h-[85dvh] w-full max-w-[480px] md:max-w-[600px] flex-col rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-neutral-100 p-5 pb-3">
+          <h2 className="text-base font-bold text-neutral-900">Menu</h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setEditing('new')}
+              disabled={noCategories}
+              className="flex items-center gap-1 rounded-full bg-brand-700 px-3 py-1.5 text-sm font-semibold text-white active:bg-brand-800 disabled:opacity-40"
+            >
+              <PlusIcon className="h-4 w-4" /> Add item
+            </button>
+            <button onClick={onClose} className="rounded-full p-1 text-neutral-400 active:bg-neutral-100">
+              <CloseIcon className="h-5 w-5" />
+            </button>
+          </div>
         </div>
-      )}
 
-      <div className="flex-1 space-y-5 p-4">
-        {categories.map((cat) => {
-          const catItems = grouped.get(cat.id) ?? []
-          if (catItems.length === 0) return null
-          return (
-            <section key={cat.id}>
-              <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-400">{cat.name}</h2>
-              <div className="divide-y divide-neutral-100 rounded-xl border border-neutral-200 bg-white">
-                {catItems.map((item) => (
-                  <MenuRow key={item.id} item={item} onClick={() => setEditing(item)} />
-                ))}
-              </div>
-            </section>
-          )
-        })}
+        <div className="flex-1 overflow-y-auto px-5">
+          {error && <p className="my-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-        {(grouped.get(UNCATEGORIZED)?.length ?? 0) > 0 && (
-          <section>
-            <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-400">Uncategorized</h2>
-            <div className="divide-y divide-neutral-100 rounded-xl border border-neutral-200 bg-white">
-              {grouped.get(UNCATEGORIZED)!.map((item) => (
-                <MenuRow key={item.id} item={item} onClick={() => setEditing(item)} />
-              ))}
+          {noCategories && (
+            <p className="my-3 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">
+              Add a category first — Settings → Categories — before adding menu items.
+            </p>
+          )}
+
+          {itemsLoading && items.length === 0 && !error && (
+            <p className="py-6 text-center text-sm text-neutral-400">Loading menu…</p>
+          )}
+
+          {!itemsLoading && items.length === 0 && !noCategories && (
+            <div className="py-8 text-center text-sm text-neutral-400">
+              No items yet. Tap "Add item" to build your menu.
             </div>
-          </section>
-        )}
+          )}
+
+          <div className="space-y-5 py-3">
+            {categories.map((cat) => {
+              const catItems = grouped.get(cat.id) ?? []
+              if (catItems.length === 0) return null
+              return (
+                <section key={cat.id}>
+                  <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-400">{cat.name}</h2>
+                  <div className="divide-y divide-neutral-100 rounded-xl border border-neutral-200 bg-white">
+                    {catItems.map((item) => (
+                      <MenuRow key={item.id} item={item} onClick={() => setEditing(item)} />
+                    ))}
+                  </div>
+                </section>
+              )
+            })}
+
+            {(grouped.get(UNCATEGORIZED)?.length ?? 0) > 0 && (
+              <section>
+                <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-400">Uncategorized</h2>
+                <div className="divide-y divide-neutral-100 rounded-xl border border-neutral-200 bg-white">
+                  {grouped.get(UNCATEGORIZED)!.map((item) => (
+                    <MenuRow key={item.id} item={item} onClick={() => setEditing(item)} />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        </div>
       </div>
 
       {editing && (
@@ -239,7 +251,7 @@ function MenuItemSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40" onClick={onClose}>
       <div
         className="w-full max-w-[480px] md:max-w-[600px] rounded-t-2xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+20px)]"
         onClick={(e) => e.stopPropagation()}

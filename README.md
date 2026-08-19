@@ -6,12 +6,11 @@ A fast, mobile-first billing app for a South Indian tiffin counter and rice flou
 
 ## v1 scope
 
-- **Menu** — fixed-price items (idly, dosa, parotta, ...) and per-kg items (batter/maavu), grouped by owner-managed categories.
 - **Billing** — tap-to-add for fixed items; for per-kg items, either weigh directly (kg → price) or tap a rupee amount (a preset or a custom one) and the kg is calculated for you — one-tap checkout with payment method.
 - **Orders** — today / last 7 days / recent history, line-item detail, cancel a bill.
 - **Dashboard** (owner-only) — sales totals and item-wise ranking over today / week / 1-12 months / a custom number of months; trend chart by calendar date or by weekday (e.g. every Saturday's sales across a quarter). Tap a bar in the trend chart to drill the item-wise list below into just that date (or, in "by weekday" view, every occurrence of that weekday in the period) — tap it again, or hit Clear, to go back to the full period.
 - **Expenses** (owner-only) — vendor purchases of raw materials and stock levels (see below). Vendor payments/dues, employee salaries, and other expenses (rent, electricity, ...) are planned as follow-up phases; a Sales-vs-Expenses net profit view on the Dashboard comes once all of those exist.
-- **Settings** — account info, categories, staff logins, vendors, materials & stock (owner-only sections), sign out.
+- **Settings** — account info, and (owner-only) menu, categories, staff logins, vendors, materials & stock, sign out.
 
 ## Tech
 
@@ -34,19 +33,19 @@ The backend project starts with no users. On first launch, use the **First-time 
 
 ## Staff logins and roles
 
-The first-time-setup account is the **owner**. From **Settings → Staff logins** (owners only), the owner can add teammates directly — no separate signup needed — edit their name/role/password, or remove their login. Everyone shares the same shop data (menu, orders), but the **Dashboard is owner-only**: staff logins don't see the sales tab in the nav, and are redirected away if they hit the URL directly.
+The first-time-setup account is the **owner**. From **Settings → Staff logins** (owners only), the owner can add teammates directly — no separate signup needed — edit their name/role/password, or remove their login. Everyone shares the same shop data (menu, orders), but the **Menu, Dashboard, Expenses, and the rest of Shop setup in Settings are owner-only**: staff logins don't see those, and are redirected away from Dashboard/Expenses if they hit the URL directly.
 
 This role check is enforced in the app's UI/routing, not by the backend — every signed-in user's JWT can still reach the same data API. That's an acceptable tradeoff for a single small shop where everyone is trusted staff, but don't treat it as a security boundary against an untrusted user with API access.
 
 ## Categories
 
-Menu categories (Tiffin, Batter, ...) are no longer fixed — owners manage them from **Settings → Categories**: add, rename, reorder, or delete (deleting is blocked while any menu item still uses that category, so items are never silently orphaned). Use the up/down arrows next to each category to reorder — this order controls the category tabs in Billing and the section order in Menu, so put your most-ordered category first for quicker tapping. New shops start with zero categories; the Categories screen offers a one-tap "add starter categories" shortcut, or add your own from scratch. A menu item needs at least one category to exist before you can add items in the Menu tab.
+Menu categories (Tiffin, Batter, ...) are no longer fixed — owners manage them from **Settings → Categories**: add, rename, reorder, or delete (deleting is blocked while any menu item still uses that category, so items are never silently orphaned). Use the up/down arrows next to each category to reorder — this order controls the category tabs in Billing and the section order in **Settings → Menu**, so put your most-ordered category first for quicker tapping. New shops start with zero categories; the Categories screen offers a one-tap "add starter categories" shortcut, or add your own from scratch. A menu item needs at least one category to exist before you can add items from Settings → Menu.
 
-**Migrating from before this feature:** menu items created before categories existed won't have one assigned (they show up under "Uncategorized" in Menu and are only reachable via the "All" tab in Billing) — open each one and pick a category to file it properly.
+**Migrating from before this feature:** menu items created before categories existed won't have one assigned (they show up under "Uncategorized" in Settings → Menu and are only reachable via the "All" tab in Billing) — open each one and pick a category to file it properly.
 
 ## Per-kg items: billing by amount
 
-Per-kg items (batter/maavu) sell in fixed, per-item ₹/kg prices set in the Menu screen. Since customers often ask for a rounded rupee amount rather than an exact weight, each per-kg menu item can also have a handful of **quick amounts** (e.g. ₹20, ₹50, ₹100) set from its edit screen — Billing then shows those as tap buttons plus a custom-amount field, and the kg is calculated automatically from the item's price (rounded to the nearest gram). Precise weight entry ("By weight (kg)") is still available as the other tab in the same sheet for anything that doesn't fit a round amount.
+Per-kg items (batter/maavu) sell in fixed, per-item ₹/kg prices set in Settings → Menu. Since customers often ask for a rounded rupee amount rather than an exact weight, each per-kg menu item can also have a handful of **quick amounts** (e.g. ₹20, ₹50, ₹100) set from its edit screen — Billing then shows those as tap buttons plus a custom-amount field, and the kg is calculated automatically from the item's price (rounded to the nearest gram). Precise weight entry ("By weight (kg)") is still available as the other tab in the same sheet for anything that doesn't fit a round amount.
 
 ## Vendor purchases &amp; stock
 

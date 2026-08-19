@@ -4,6 +4,7 @@ import { isOwner } from '../lib/types'
 import { AlertTriangleIcon, LogoutIcon, MenuBookIcon, PackageIcon, TruckIcon, UsersIcon } from '../components/icons'
 import { StaffSheet } from './StaffSheet'
 import { CategoriesSheet } from './CategoriesSheet'
+import { MenuSheet } from './MenuSheet'
 import { VendorsSheet } from './VendorsSheet'
 import { MaterialsSheet } from './MaterialsSheet'
 import { useConfirm } from '../lib/confirm'
@@ -12,6 +13,7 @@ import { MaterialApi } from '../lib/data'
 
 export function Settings() {
   const { user, signOut } = useAuth()
+  const [showMenu, setShowMenu] = useState(false)
   const [showStaff, setShowStaff] = useState(false)
   const [showCategories, setShowCategories] = useState(false)
   const [showVendors, setShowVendors] = useState(false)
@@ -50,6 +52,14 @@ export function Settings() {
           <section>
             <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-400">Shop setup</h2>
             <div className="divide-y divide-neutral-100 rounded-xl border border-neutral-200 bg-white">
+              <button
+                onClick={() => setShowMenu(true)}
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+              >
+                <MenuBookIcon className="h-5 w-5 text-neutral-400" />
+                <span className="flex-1 text-sm font-medium text-neutral-900">Menu</span>
+                <span className="text-neutral-300">›</span>
+              </button>
               <button
                 onClick={() => setShowCategories(true)}
                 className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
@@ -102,6 +112,7 @@ export function Settings() {
         </section>
       </div>
 
+      {showMenu && <MenuSheet onClose={() => setShowMenu(false)} />}
       {showStaff && <StaffSheet onClose={() => setShowStaff(false)} />}
       {showCategories && <CategoriesSheet onClose={() => setShowCategories(false)} />}
       {showVendors && <VendorsSheet onClose={() => setShowVendors(false)} />}
