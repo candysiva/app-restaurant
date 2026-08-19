@@ -49,11 +49,11 @@ Per-kg items (batter/maavu) sell in fixed, per-item ₹/kg prices set in Setting
 
 ## Vendor purchases &amp; stock
 
-Owners manage **Vendors** and **Materials &amp; stock** from Settings (add/edit/deactivate, same pattern as Categories). A material has a unit (kg, litre, piece, ...), a running **current stock** quantity, and a **low-stock threshold**.
+Owners manage **Vendors** and **Materials &amp; stock** from Settings (add/edit/deactivate, same pattern as Categories). A material has a unit (kg, litre, piece, ...), a running **current stock** quantity, and a **low-stock threshold**. Tap a material in **Settings → Materials &amp; stock** to edit its details or **log a stock change** (usage, wastage, or a manual correction) — stock isn't tied to sales automatically (that would need a recipe/ingredients mapping for every menu item, a bigger feature not built here), so log what goes out as you use it.
 
 From the **Expenses** tab:
 - **Purchases** — record a vendor bill with one or more material lines, each with its own quantity and price — prices aren't fixed and can differ purchase to purchase, even for the same material. Saving a purchase automatically increases each material's stock and writes an audit entry (visible per-material history is planned).
-- **Stock** — materials at or below their low-stock threshold surface in a "Needs reorder" section (also flagged with a badge on Settings → Materials &amp; stock). Tap any material to log usage, wastage, or a manual correction — stock isn't tied to sales automatically (that would need a recipe/ingredients mapping for every menu item, a bigger feature not built here), so log what goes out as you use it.
+- **Stock** — a read-only overview: materials at or below their low-stock threshold surface in a "Needs reorder" section (also flagged with a badge on Settings → Materials &amp; stock). Logging a stock change happens from Settings → Materials &amp; stock, not here.
 
 Purchases start **unpaid**; recording payments against a bill and tracking vendor dues/due-dates is the next phase.
 

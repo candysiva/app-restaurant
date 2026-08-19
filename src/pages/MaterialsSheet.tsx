@@ -4,6 +4,7 @@ import type { Material, MaterialUnit } from '../lib/types'
 import { formatQtyWithUnit } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { AlertTriangleIcon, CloseIcon, TrashIcon } from '../components/icons'
+import { LogStockSheet } from './expenses/LogStockSheet'
 
 const UNITS: MaterialUnit[] = ['kg', 'g', 'litre', 'ml', 'piece', 'packet', 'dozen', 'bag', 'bundle']
 
@@ -15,6 +16,7 @@ export function MaterialsSheet({ onClose }: { onClose: () => void }) {
   const [minStockThreshold, setMinStockThreshold] = useState('0')
   const [busy, setBusy] = useState(false)
   const [editing, setEditing] = useState<Material | null>(null)
+  const [loggingStock, setLoggingStock] = useState<Material | null>(null)
 
   function load() {
     MaterialApi.list()
@@ -134,6 +136,19 @@ export function MaterialsSheet({ onClose }: { onClose: () => void }) {
             setMaterials((prev) => prev?.map((m) => (m.id === updated.id ? updated : m)).sort((a, b) => a.name.localeCompare(b.name)) ?? null)
             setEditing(null)
           }}
+          onLogStock={() => setLoggingStock(editing)}
+        />
+      )}
+
+      {loggingStock && (
+        <LogStockSheet
+          material={loggingStock}
+          onClose={() => setLoggingStock(null)}
+          onSaved={(updated) => {
+            setMaterials((prev) => prev?.map((m) => (m.id === updated.id ? updated : m)) ?? null)
+            setLoggingStock(null)
+            setEditing(null)
+          }}
         />
       )}
     </div>
@@ -167,10 +182,12 @@ function EditMaterialSheet({
   material,
   onClose,
   onSaved,
+  onLogStock,
 }: {
   material: Material
   onClose: () => void
   onSaved: (m: Material) => void
+  onLogStock: () => void
 }) {
   const [name, setName] = useState(material.name)
   const [unit, setUnit] = useState<MaterialUnit>(material.unit)
@@ -246,10 +263,21 @@ function EditMaterialSheet({
               />
             </label>
           </div>
-          <p className="rounded-xl bg-neutral-50 px-3 py-2.5 text-sm text-neutral-500">
-            Current stock: {formatQtyWithUnit(material.currentStock, material.unit)} — adjust from the Expenses →
-            Stock tab, not here.
-          </p>
+          <div className="flex items-center justify-between rounded-xl bg-neutral-50 px-3 py-2.5">
+            <div>
+              <p className="text-xs font-medium text-neutral-500">Current stock</p>
+              <p className="text-base font-bold text-neutral-900">
+                {formatQtyWithUnit(material.currentStock, material.unit)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onLogStock}
+              className="shrink-0 rounded-lg bg-brand-700 px-3 py-2 text-xs font-semibold text-white active:bg-brand-800"
+            >
+              Log stock change
+            </button>
+          </div>
 
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 

@@ -1,22 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { MaterialApi } from '../../lib/data'
 import type { Material } from '../../lib/types'
 import { formatQtyWithUnit } from '../../lib/format'
 import { ApiError } from '../../lib/api'
 import { AlertTriangleIcon } from '../../components/icons'
 import { useCachedFetch } from '../../lib/cache'
-import { LogStockSheet } from './LogStockSheet'
 
 const EMPTY_MATERIALS: Material[] = []
 
 export function StockTab() {
-  const {
-    data: rawMaterials,
-    loading,
-    error: fetchError,
-    mutate,
-  } = useCachedFetch('materials', MaterialApi.list)
-  const [logging, setLogging] = useState<Material | null>(null)
+  const { data: rawMaterials, loading, error: fetchError } = useCachedFetch('materials', MaterialApi.list)
 
   const materials = useMemo(() => (rawMaterials ?? EMPTY_MATERIALS).filter((m) => m.active), [rawMaterials])
   const error = fetchError ? (fetchError instanceof ApiError ? fetchError.message : 'Could not load materials') : null
@@ -42,6 +35,12 @@ export function StockTab() {
         </p>
       )}
 
+      {materials.length > 0 && (
+        <p className="text-xs text-neutral-400">
+          To log usage, wastage, or a correction, open the material from Settings → Materials &amp; stock.
+        </p>
+      )}
+
       {needsReorder.length > 0 && (
         <section>
           <h2 className="mb-2 flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-red-600">
@@ -49,7 +48,7 @@ export function StockTab() {
           </h2>
           <div className="divide-y divide-neutral-100 rounded-xl border border-red-200 bg-white">
             {needsReorder.map((m) => (
-              <StockRow key={m.id} material={m} onClick={() => setLogging(m)} />
+              <StockRow key={m.id} material={m} />
             ))}
           </div>
         </section>
@@ -60,30 +59,19 @@ export function StockTab() {
           <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-400">In stock</h2>
           <div className="divide-y divide-neutral-100 rounded-xl border border-neutral-200 bg-white">
             {ok.map((m) => (
-              <StockRow key={m.id} material={m} onClick={() => setLogging(m)} />
+              <StockRow key={m.id} material={m} />
             ))}
           </div>
         </section>
-      )}
-
-      {logging && (
-        <LogStockSheet
-          material={logging}
-          onClose={() => setLogging(null)}
-          onSaved={(updated) => {
-            mutate((prev) => (prev ?? []).map((m) => (m.id === updated.id ? updated : m)))
-            setLogging(null)
-          }}
-        />
       )}
     </div>
   )
 }
 
-function StockRow({ material, onClick }: { material: Material; onClick: () => void }) {
+function StockRow({ material }: { material: Material }) {
   const low = material.currentStock <= material.minStockThreshold
   return (
-    <button onClick={onClick} className="flex w-full items-center justify-between px-4 py-3 text-left">
+    <div className="flex items-center justify-between px-4 py-3">
       <div>
         <p className="text-sm font-medium text-neutral-900">{material.name}</p>
         <p className="text-xs text-neutral-500">
@@ -93,6 +81,6 @@ function StockRow({ material, onClick }: { material: Material; onClick: () => vo
       <span className={`text-sm font-bold ${low ? 'text-red-600' : 'text-neutral-900'}`}>
         {formatQtyWithUnit(material.currentStock, material.unit)}
       </span>
-    </button>
+    </div>
   )
 }
