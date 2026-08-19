@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { BillIcon, MenuBookIcon, OrdersIcon, DashboardIcon, SettingsIcon } from './icons'
+import { BillIcon, MenuBookIcon, OrdersIcon, ExpensesIcon, DashboardIcon, SettingsIcon } from './icons'
 import { isOwner } from '../lib/types'
 import { useAuth } from '../lib/auth'
 
@@ -7,6 +7,7 @@ const tabs = [
   { to: '/', label: 'Bill', Icon: BillIcon, end: true, ownerOnly: false },
   { to: '/menu', label: 'Menu', Icon: MenuBookIcon, end: false, ownerOnly: false },
   { to: '/orders', label: 'Orders', Icon: OrdersIcon, end: false, ownerOnly: false },
+  { to: '/expenses', label: 'Expenses', Icon: ExpensesIcon, end: false, ownerOnly: true },
   { to: '/dashboard', label: 'Dashboard', Icon: DashboardIcon, end: false, ownerOnly: true },
   { to: '/settings', label: 'Settings', Icon: SettingsIcon, end: false, ownerOnly: false },
 ]

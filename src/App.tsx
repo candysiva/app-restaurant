@@ -7,6 +7,7 @@ import { Login } from './pages/Login'
 import { Billing } from './pages/Billing'
 import { Menu } from './pages/Menu'
 import { Orders } from './pages/Orders'
+import { Expenses } from './pages/Expenses'
 import { Dashboard } from './pages/Dashboard'
 import { Settings } from './pages/Settings'
 
@@ -52,6 +53,16 @@ export default function App() {
                 <ProtectedRoute>
                   <AppShell>
                     <Orders />
+                  </AppShell>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/expenses"
+              element={
+                <ProtectedRoute ownerOnly>
+                  <AppShell>
+                    <Expenses />
                   </AppShell>
                 </ProtectedRoute>
               }

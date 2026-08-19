@@ -78,3 +78,63 @@ export interface StaffUser {
 export function isOwner(user: { role?: Role } | null | undefined): boolean {
   return user?.role !== 'staff'
 }
+
+export type MaterialUnit = 'kg' | 'g' | 'litre' | 'ml' | 'piece' | 'packet' | 'dozen' | 'bag' | 'bundle'
+export type PurchasePaymentStatus = 'unpaid' | 'partial' | 'paid'
+export type StockTxnType = 'purchase' | 'usage' | 'wastage' | 'adjustment_in' | 'adjustment_out'
+
+export interface Vendor {
+  id: string
+  name: string
+  phone?: string
+  address?: string
+  notes?: string
+  active: boolean
+}
+
+export interface Material {
+  id: string
+  name: string
+  unit: MaterialUnit
+  currentStock: number
+  minStockThreshold: number
+  active: boolean
+}
+
+export interface Purchase {
+  id: string
+  purchaseNumber: number
+  vendor: { id: string; name?: string; phone?: string }
+  purchaseDate: string
+  purchaseDatetime: string
+  total: number
+  itemCount: number
+  amountPaid: number
+  balanceDue: number
+  paymentStatus: PurchasePaymentStatus
+  dueDate?: string
+  notes?: string
+}
+
+export interface PurchaseItem {
+  id: string
+  purchase: { id: string; purchaseNumber?: number; purchaseDate?: string }
+  material: { id: string; name?: string; unit?: string }
+  materialName: string
+  unit: string
+  quantity: number
+  unitPrice: number
+  lineTotal: number
+  purchaseDate: string
+}
+
+export interface StockTransaction {
+  id: string
+  material: { id: string; name?: string; unit?: string }
+  type: StockTxnType
+  quantity: number
+  balanceAfter: number
+  transactionDate: string
+  notes?: string
+  relatedPurchase?: { id: string; purchaseNumber?: number }
+}

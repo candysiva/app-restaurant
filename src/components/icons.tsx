@@ -134,6 +134,61 @@ export function ChevronDownIcon({ className }: IconProps) {
   )
 }
 
+export function ExpensesIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M4 7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1h1a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="15.5" cy="12" r="1.2" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function PackageIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M3.5 8.5 12 4l8.5 4.5V16L12 20.5 3.5 16V8.5Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3.5 8.5 12 13l8.5-4.5M12 13v7.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+export function TruckIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M3 6.5h10v9H3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M13 10h4l3 3v2.5h-7z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <circle cx="7" cy="17" r="1.6" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="17" cy="17" r="1.6" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  )
+}
+
+export function AlertTriangleIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M12 4 3 19h18L12 4Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M12 10v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="12" cy="16.5" r="0.9" fill="currentColor" />
+    </svg>
+  )
+}
+
 export function LogoutIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>

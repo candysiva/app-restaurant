@@ -10,9 +10,8 @@ A fast, mobile-first billing app for a South Indian tiffin counter and rice flou
 - **Billing** — tap-to-add for fixed items; for per-kg items, either weigh directly (kg → price) or tap a rupee amount (a preset or a custom one) and the kg is calculated for you — one-tap checkout with payment method.
 - **Orders** — today / last 7 days / recent history, line-item detail, cancel a bill.
 - **Dashboard** (owner-only) — sales totals and item-wise ranking over today / week / 1-12 months / a custom number of months; trend chart by calendar date or by weekday (e.g. every Saturday's sales across a quarter). Tap a bar in the trend chart to drill the item-wise list below into just that date (or, in "by weekday" view, every occurrence of that weekday in the period) — tap it again, or hit Clear, to go back to the full period.
-- **Settings** — account info, categories, staff logins (owner-only sections), sign out.
-
-Vendor management, procurement, raw materials, and spend-vs-profit are intentionally out of scope for v1 (planned for a later version).
+- **Expenses** (owner-only) — vendor purchases of raw materials and stock levels (see below). Vendor payments/dues, employee salaries, and other expenses (rent, electricity, ...) are planned as follow-up phases; a Sales-vs-Expenses net profit view on the Dashboard comes once all of those exist.
+- **Settings** — account info, categories, staff logins, vendors, materials & stock (owner-only sections), sign out.
 
 ## Tech
 
@@ -48,6 +47,16 @@ Menu categories (Tiffin, Batter, ...) are no longer fixed — owners manage them
 ## Per-kg items: billing by amount
 
 Per-kg items (batter/maavu) sell in fixed, per-item ₹/kg prices set in the Menu screen. Since customers often ask for a rounded rupee amount rather than an exact weight, each per-kg menu item can also have a handful of **quick amounts** (e.g. ₹20, ₹50, ₹100) set from its edit screen — Billing then shows those as tap buttons plus a custom-amount field, and the kg is calculated automatically from the item's price (rounded to the nearest gram). Precise weight entry ("By weight (kg)") is still available as the other tab in the same sheet for anything that doesn't fit a round amount.
+
+## Vendor purchases &amp; stock
+
+Owners manage **Vendors** and **Materials &amp; stock** from Settings (add/edit/deactivate, same pattern as Categories). A material has a unit (kg, litre, piece, ...), a running **current stock** quantity, and a **low-stock threshold**.
+
+From the **Expenses** tab:
+- **Purchases** — record a vendor bill with one or more material lines, each with its own quantity and price — prices aren't fixed and can differ purchase to purchase, even for the same material. Saving a purchase automatically increases each material's stock and writes an audit entry (visible per-material history is planned).
+- **Stock** — materials at or below their low-stock threshold surface in a "Needs reorder" section (also flagged with a badge on Settings → Materials &amp; stock). Tap any material to log usage, wastage, or a manual correction — stock isn't tied to sales automatically (that would need a recipe/ingredients mapping for every menu item, a bigger feature not built here), so log what goes out as you use it.
+
+Purchases start **unpaid**; recording payments against a bill and tracking vendor dues/due-dates is the next phase.
 
 ## Order numbers
 

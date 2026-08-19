@@ -1,16 +1,24 @@
 import { useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { isOwner } from '../lib/types'
-import { LogoutIcon, MenuBookIcon, UsersIcon } from '../components/icons'
+import { AlertTriangleIcon, LogoutIcon, MenuBookIcon, PackageIcon, TruckIcon, UsersIcon } from '../components/icons'
 import { StaffSheet } from './StaffSheet'
 import { CategoriesSheet } from './CategoriesSheet'
+import { VendorsSheet } from './VendorsSheet'
+import { MaterialsSheet } from './MaterialsSheet'
 import { useConfirm } from '../lib/confirm'
+import { useCachedFetch } from '../lib/cache'
+import { MaterialApi } from '../lib/data'
 
 export function Settings() {
   const { user, signOut } = useAuth()
   const [showStaff, setShowStaff] = useState(false)
   const [showCategories, setShowCategories] = useState(false)
+  const [showVendors, setShowVendors] = useState(false)
+  const [showMaterials, setShowMaterials] = useState(false)
   const confirmDialog = useConfirm()
+  const { data: materials } = useCachedFetch('materials', MaterialApi.list)
+  const lowStockCount = (materials ?? []).filter((m) => m.active && m.currentStock <= m.minStockThreshold).length
 
   async function handleSignOut() {
     if (await confirmDialog({ title: 'Sign out?', confirmLabel: 'Sign out' })) signOut()
@@ -58,6 +66,28 @@ export function Settings() {
                 <span className="flex-1 text-sm font-medium text-neutral-900">Staff logins</span>
                 <span className="text-neutral-300">›</span>
               </button>
+              <button
+                onClick={() => setShowVendors(true)}
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+              >
+                <TruckIcon className="h-5 w-5 text-neutral-400" />
+                <span className="flex-1 text-sm font-medium text-neutral-900">Vendors</span>
+                <span className="text-neutral-300">›</span>
+              </button>
+              <button
+                onClick={() => setShowMaterials(true)}
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+              >
+                <PackageIcon className="h-5 w-5 text-neutral-400" />
+                <span className="flex-1 text-sm font-medium text-neutral-900">Materials &amp; stock</span>
+                {lowStockCount > 0 && (
+                  <span className="flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700">
+                    <AlertTriangleIcon className="h-3 w-3" />
+                    {lowStockCount}
+                  </span>
+                )}
+                <span className="text-neutral-300">›</span>
+              </button>
             </div>
           </section>
         )}
@@ -74,6 +104,8 @@ export function Settings() {
 
       {showStaff && <StaffSheet onClose={() => setShowStaff(false)} />}
       {showCategories && <CategoriesSheet onClose={() => setShowCategories(false)} />}
+      {showVendors && <VendorsSheet onClose={() => setShowVendors(false)} />}
+      {showMaterials && <MaterialsSheet onClose={() => setShowMaterials(false)} />}
     </div>
   )
 }

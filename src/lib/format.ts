@@ -11,6 +11,10 @@ export function formatQty(qty: number, priceType: 'fixed' | 'per_kg'): string {
   return priceType === 'per_kg' ? `${qty} kg` : `${qty}`
 }
 
+export function formatQtyWithUnit(qty: number, unit: string): string {
+  return `${qty} ${unit}`
+}
+
 export function todayIso(): string {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
