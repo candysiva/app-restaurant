@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { useEffect, useMemo, useState } from 'react'
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { OrderApi, OrderItemApi } from '../lib/data'
 import type { Order, OrderItem } from '../lib/types'
 import { dateIso, formatDateLabel, formatInr, todayIso } from '../lib/format'
@@ -9,6 +9,7 @@ import { useCachedFetch } from '../lib/cache'
 type Period = 'today' | 'week' | '1m' | '2m' | '3m' | '6m' | '12m' | 'custom'
 type ViewMode = 'date' | 'weekday'
 type WeekdayFilter = 'all' | number
+type Selection = { kind: 'date'; date: string } | { kind: 'weekday'; jsDay: number } | null
 
 const MONTHS_BY_PERIOD: Partial<Record<Period, number>> = { '1m': 1, '2m': 2, '3m': 3, '6m': 6, '12m': 12 }
 const PERIOD_LABEL: Record<Period, string> = {
@@ -55,6 +56,7 @@ async function fetchDashboardData(from: string, to: string): Promise<DashboardDa
 
 const BRAND = '#b91c1c'
 const BRAND_LIGHT = '#fee2e2'
+const BRAND_MUTED = '#f3a5a5'
 
 // Compact axis labels: full rupee formatting (formatInr) is too wide for a
 // mobile Y axis, e.g. "₹1,25,000" — collapse to "₹1.25L" / "₹4.2k" instead.
@@ -91,6 +93,17 @@ export function Dashboard() {
   const [customMonths, setCustomMonths] = useState(4)
   const [viewMode, setViewMode] = useState<ViewMode>('date')
   const [weekdayFilter, setWeekdayFilter] = useState<WeekdayFilter>('all')
+  const [selection, setSelection] = useState<Selection>(null)
+
+  useEffect(() => setSelection(null), [period, customMonths, viewMode, weekdayFilter])
+
+  function toggleDateSelection(date: string) {
+    setSelection((prev) => (prev?.kind === 'date' && prev.date === date ? null : { kind: 'date', date }))
+  }
+
+  function toggleWeekdaySelection(jsDay: number) {
+    setSelection((prev) => (prev?.kind === 'weekday' && prev.jsDay === jsDay ? null : { kind: 'weekday', jsDay }))
+  }
 
   const { from, to, days } = useMemo(() => rangeFor(period, customMonths), [period, customMonths])
 
@@ -129,7 +142,7 @@ export function Dashboard() {
   const weekdayAggData = useMemo(() => {
     const sums = new Array(7).fill(0)
     for (const o of completedOrders) sums[weekdayOf(o.orderDate)] += o.total
-    return WEEKDAYS.map(({ label, jsDay }) => ({ day: label, label, sales: sums[jsDay] }))
+    return WEEKDAYS.map(({ label, jsDay }) => ({ day: label, label, sales: sums[jsDay], jsDay }))
   }, [completedOrders])
 
   const weekdayTrendData = useMemo(() => {
@@ -144,9 +157,22 @@ export function Dashboard() {
   const weekdayChartLabel =
     weekdayFilter === 'all' ? 'By weekday' : `Every ${WEEKDAYS.find((w) => w.jsDay === weekdayFilter)?.fullLabel}`
 
+  const filteredLineItems = useMemo(() => {
+    if (!selection) return validLineItems
+    if (selection.kind === 'date') return validLineItems.filter((li) => li.orderDate === selection.date)
+    return validLineItems.filter((li) => weekdayOf(li.orderDate) === selection.jsDay)
+  }, [validLineItems, selection])
+
+  const selectionLabel =
+    selection?.kind === 'date'
+      ? formatDateLabel(selection.date)
+      : selection?.kind === 'weekday'
+        ? `Every ${WEEKDAYS.find((w) => w.jsDay === selection.jsDay)?.fullLabel}`
+        : null
+
   const itemStats = useMemo(() => {
     const byItem = new Map<string, { name: string; category: string; revenue: number; qty: number; priceType: string }>()
-    for (const li of validLineItems) {
+    for (const li of filteredLineItems) {
       const key = li.itemName
       const existing = byItem.get(key)
       if (existing) {
@@ -163,7 +189,7 @@ export function Dashboard() {
       }
     }
     return [...byItem.values()].sort((a, b) => b.revenue - a.revenue)
-  }, [validLineItems])
+  }, [filteredLineItems])
 
   const maxItemRevenue = itemStats[0]?.revenue ?? 0
 
@@ -257,15 +283,48 @@ export function Dashboard() {
               <TrendChart
                 data={viewMode === 'date' ? trendData : weekdayChartData}
                 caption={viewMode === 'weekday' ? weekdayChartLabel : undefined}
+                selectedKey={
+                  viewMode === 'date'
+                    ? selection?.kind === 'date'
+                      ? selection.date
+                      : undefined
+                    : weekdayFilter === 'all'
+                      ? selection?.kind === 'weekday'
+                        ? WEEKDAYS.find((w) => w.jsDay === selection.jsDay)?.label
+                        : undefined
+                      : selection?.kind === 'date'
+                        ? selection.date
+                        : undefined
+                }
+                onBarClick={(entry) => {
+                  if (viewMode === 'weekday' && weekdayFilter === 'all') {
+                    toggleWeekdaySelection(entry.jsDay!)
+                  } else {
+                    toggleDateSelection(entry.day)
+                  }
+                }}
               />
+              <p className="mt-1.5 text-center text-[11px] text-neutral-400">Tap a bar to see that day's item-wise sales below.</p>
             </section>
           )}
 
           <section>
-            <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-400">Item-wise sales</h2>
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-xs font-bold uppercase tracking-wide text-neutral-400">
+                Item-wise sales{selectionLabel && <span className="text-neutral-500"> · {selectionLabel}</span>}
+              </h2>
+              {selection && (
+                <button
+                  onClick={() => setSelection(null)}
+                  className="text-xs font-medium text-brand-700 underline"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
             {itemStats.length === 0 ? (
               <p className="rounded-xl border border-neutral-200 bg-white p-4 text-center text-sm text-neutral-400">
-                No sales in this period yet.
+                No sales for this selection yet.
               </p>
             ) : (
               <div className="divide-y divide-neutral-100 rounded-xl border border-neutral-200 bg-white">
@@ -300,7 +359,24 @@ export function Dashboard() {
   )
 }
 
-function TrendChart({ data, caption }: { data: { day: string; label: string; sales: number }[]; caption?: string }) {
+interface TrendPoint {
+  day: string
+  label: string
+  sales: number
+  jsDay?: number
+}
+
+function TrendChart({
+  data,
+  caption,
+  selectedKey,
+  onBarClick,
+}: {
+  data: TrendPoint[]
+  caption?: string
+  selectedKey?: string
+  onBarClick?: (entry: TrendPoint) => void
+}) {
   const dense = data.length > 14
   const minWidth = dense ? Math.max(600, data.length * 26) : undefined
   // Card content is ~320px wide on a phone after padding; use that as the
@@ -345,7 +421,19 @@ function TrendChart({ data, caption }: { data: { day: string; label: string; sal
                   labelStyle={{ color: '#111827', fontWeight: 600 }}
                   contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
                 />
-                <Bar dataKey="sales" fill={BRAND} radius={[4, 4, 0, 0]} maxBarSize={28} />
+                <Bar
+                  dataKey="sales"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={28}
+                  cursor={onBarClick ? 'pointer' : undefined}
+                  onClick={(entry: { payload?: TrendPoint }) => {
+                    if (entry.payload) onBarClick?.(entry.payload)
+                  }}
+                >
+                  {data.map((entry) => (
+                    <Cell key={entry.day} fill={!selectedKey || entry.day === selectedKey ? BRAND : BRAND_MUTED} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
