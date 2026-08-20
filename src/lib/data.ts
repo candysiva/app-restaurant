@@ -14,6 +14,7 @@ import type {
   StockTransaction,
   StockTxnType,
   Vendor,
+  VendorPayment,
 } from './types'
 
 async function fetchAll<T>(path: string, params: Record<string, string | number | boolean | undefined>): Promise<T[]> {
@@ -257,6 +258,55 @@ export const StockTransactionApi = {
   }) => api.post<StockTransaction>('/stock_transactions', data),
 }
 
+export const VendorPaymentApi = {
+  listByPurchase: (purchaseId: string) => api.get<VendorPayment>(`/vendor_payments?purchase=${purchaseId}&limit=200`),
+  listByVendor: (vendorId: string) => fetchAll<VendorPayment>('/vendor_payments', { vendor: vendorId }),
+  listInRange: (fromDate: string, toDate: string) =>
+    fetchAll<VendorPayment>('/vendor_payments', { 'paymentDate[gte]': fromDate, 'paymentDate[lte]': toDate }),
+  create: (data: {
+    vendor: { id: string }
+    purchase: { id: string }
+    amount: number
+    paymentMethod: PaymentMethod
+    paymentDate: string
+    notes?: string
+  }) => api.post<VendorPayment>('/vendor_payments', data),
+}
+
+/**
+ * Records a payment against a purchase: POSTs the vendor_payments row, then updates
+ * the purchase's amountPaid/balanceDue/paymentStatus. balanceDue is clamped at 0 on
+ * overpayment (small-shop tolerance) but amountPaid still reflects the full amount
+ * actually received, for reconciliation.
+ */
+export async function recordVendorPayment(
+  purchase: Purchase,
+  amount: number,
+  opts: { paymentMethod: PaymentMethod; paymentDate?: string; notes?: string },
+): Promise<Purchase> {
+  const paymentDate = opts.paymentDate ?? todayIso()
+  const newAmountPaid = purchase.amountPaid + amount
+  const newBalanceDue = Math.max(0, purchase.total - newAmountPaid)
+  const paymentStatus: Purchase['paymentStatus'] = newBalanceDue <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : 'unpaid'
+
+  await VendorPaymentApi.create({
+    vendor: { id: purchase.vendor.id },
+    purchase: { id: purchase.id },
+    amount,
+    paymentMethod: opts.paymentMethod,
+    paymentDate,
+    notes: opts.notes,
+  })
+
+  const updated = await PurchaseApi.update(purchase.id, {
+    amountPaid: newAmountPaid,
+    balanceDue: newBalanceDue,
+    paymentStatus,
+  })
+
+  return { ...purchase, ...updated }
+}
+
 // Same max+1-per-day read pattern as nextOrderNumber, for the same reason
 // (every device/login continues one shared sequence instead of its own).
 async function nextPurchaseNumber(purchaseDate: string): Promise<number> {
@@ -273,18 +323,28 @@ export interface PurchaseLine {
 /**
  * Records a vendor purchase: the header, one line item per material (snapshotting
  * name/unit since prices and even material names can change later), a stock_transactions
- * audit row per line, and bumps each material's currentStock. Starts fully unpaid —
- * "pay now at purchase time" lands in Phase 2 alongside vendor_payments.
+ * audit row per line, and bumps each material's currentStock. Starts unpaid unless
+ * `initialPayment` is given (e.g. paid the vendor on the spot), in which case a
+ * vendor_payments row is written too so payment history stays complete.
  */
 export async function submitPurchase(
   vendor: Vendor,
   lines: PurchaseLine[],
-  opts: { purchaseDate?: string; dueDate?: string; notes?: string } = {},
+  opts: {
+    purchaseDate?: string
+    dueDate?: string
+    notes?: string
+    initialPayment?: number
+    paymentMethod?: PaymentMethod
+  } = {},
 ): Promise<Purchase> {
   const now = new Date()
   const purchaseDate = opts.purchaseDate ?? todayIso()
   const total = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0)
   const itemCount = lines.length
+  const amountPaid = Math.min(Math.max(0, opts.initialPayment ?? 0), total)
+  const balanceDue = total - amountPaid
+  const paymentStatus: Purchase['paymentStatus'] = balanceDue <= 0 ? 'paid' : amountPaid > 0 ? 'partial' : 'unpaid'
 
   const purchase = await PurchaseApi.create({
     purchaseNumber: await nextPurchaseNumber(purchaseDate),
@@ -293,12 +353,22 @@ export async function submitPurchase(
     purchaseDatetime: now.toISOString(),
     total,
     itemCount,
-    amountPaid: 0,
-    balanceDue: total,
-    paymentStatus: 'unpaid',
+    amountPaid,
+    balanceDue,
+    paymentStatus,
     dueDate: opts.dueDate,
     notes: opts.notes,
   })
+
+  if (amountPaid > 0) {
+    await VendorPaymentApi.create({
+      vendor: { id: vendor.id },
+      purchase: { id: purchase.id },
+      amount: amountPaid,
+      paymentMethod: opts.paymentMethod ?? 'cash',
+      paymentDate: purchaseDate,
+    })
+  }
 
   await Promise.all(
     lines.map((line) =>

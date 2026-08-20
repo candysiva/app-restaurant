@@ -12,7 +12,7 @@ The bottom nav is deliberately kept to five items — **Bill, Orders, Stock, Das
 - **Orders** — today / last 7 days / recent history, line-item detail, cancel a bill.
 - **Stock** — the day-to-day stock screen, open to owners and staff: materials at or below their low-stock threshold surface in a "Needs reorder" section; tap any material to log usage, wastage, or a correction (see below).
 - **Dashboard** (owner-only) — sales totals and item-wise ranking over today / week / 1-12 months / a custom number of months; trend chart by calendar date or by weekday (e.g. every Saturday's sales across a quarter). Tap a bar in the trend chart to drill the item-wise list below into just that date (or, in "by weekday" view, every occurrence of that weekday in the period) — tap it again, or hit Clear, to go back to the full period.
-- **More** — account info, and (owner-only) menu, categories, staff logins, vendors, purchases, materials & stock, sign out. Vendor payments/dues, employee salaries, and other expenses (rent, electricity, ...) are planned as follow-up features; a Sales-vs-Expenses net profit view on the Dashboard comes once all of those exist.
+- **More** — account info, and (owner-only) menu, categories, staff logins, vendors, purchases (with vendor payments/dues), materials & stock, sign out. Employee salaries and other expenses (rent, electricity, ...) are planned as follow-up features; a Sales-vs-Expenses net profit view on the Dashboard comes once all of those exist.
 
 ## Tech
 
@@ -55,7 +55,9 @@ Owners manage **Vendors** and **Materials &amp; stock** (master data — name, u
 
 Day-to-day stock work happens in the **Stock** nav tab, not More: materials at or below their threshold surface in a "Needs reorder" section, and tapping any material opens a **log a stock change** form (usage, wastage, or a manual correction) — stock isn't tied to sales automatically (that would need a recipe/ingredients mapping for every menu item, a bigger feature not built here), so log what goes out as you use it. More → Materials & stock stays focused on editing a material's name/unit/threshold; it shows current stock read-only and points you to the Stock tab to change it.
 
-**More → Purchases** records a vendor bill with one or more material lines, each with its own quantity and price — prices aren't fixed and can differ purchase to purchase, even for the same material. Saving a purchase automatically increases each material's stock and writes an audit entry (visible per-material history is planned). Purchases start **unpaid**; recording payments against a bill and tracking vendor dues/due-dates is the next feature.
+**More → Purchases** records a vendor bill with one or more material lines, each with its own quantity and price — prices aren't fixed and can differ purchase to purchase, even for the same material. Saving a purchase automatically increases each material's stock and writes an audit entry (visible per-material history is planned). Optionally pay the vendor something on the spot ("Pay now") right when you record the purchase.
+
+A purchase tracks **amount paid**, **balance due**, and a **payment status** (Unpaid / Partially paid / Paid). Open any unpaid or partially-paid purchase to see its payment history and **Record payment** — the amount field defaults to the remaining balance, but can be overridden for a partial payment; recording brings the balance down (and the status up) automatically. **More → Vendors** shows each vendor's total outstanding balance (summed across all their purchases) so you can see who's owed money at a glance. Due dates set on a purchase aren't surfaced anywhere yet beyond the purchase's own detail view — a dedicated "what's coming due" view is a possible follow-up.
 
 ## Order numbers
 

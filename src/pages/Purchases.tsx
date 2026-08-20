@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { MaterialApi, PurchaseApi, PurchaseItemApi, VendorApi, submitPurchase, type PurchaseLine } from '../lib/data'
-import type { Purchase, PurchaseItem, Vendor } from '../lib/types'
+import {
+  MaterialApi,
+  PurchaseApi,
+  PurchaseItemApi,
+  VendorApi,
+  VendorPaymentApi,
+  recordVendorPayment,
+  submitPurchase,
+  type PurchaseLine,
+} from '../lib/data'
+import type { PaymentMethod, Purchase, PurchaseItem, Vendor, VendorPayment } from '../lib/types'
 import { dateIso, formatDateLabel, formatInr, formatQtyWithUnit, todayIso } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { CloseIcon, PlusIcon } from '../components/icons'
@@ -116,7 +125,16 @@ export function Purchases() {
         />
       )}
 
-      {viewing && <PurchaseDetailSheet purchase={viewing} onClose={() => setViewing(null)} />}
+      {viewing && (
+        <PurchaseDetailSheet
+          purchase={viewing}
+          onClose={() => setViewing(null)}
+          onUpdated={(updated) => {
+            setViewing(updated)
+            mutate((prev) => (prev ?? []).map((p) => (p.id === updated.id ? updated : p)))
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -157,6 +175,8 @@ function PurchaseSheet({
   const [dueDate, setDueDate] = useState('')
   const [notes, setNotes] = useState('')
   const [lines, setLines] = useState<PurchaseLine[]>([])
+  const [payNow, setPayNow] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
 
   const [materialId, setMaterialId] = useState('')
   const [quantity, setQuantity] = useState('')
@@ -195,6 +215,8 @@ function PurchaseSheet({
         purchaseDate,
         dueDate: dueDate || undefined,
         notes: notes.trim() || undefined,
+        initialPayment: Number(payNow) || 0,
+        paymentMethod,
       })
       onSaved(purchase)
     } catch (err) {
@@ -319,6 +341,35 @@ function PurchaseSheet({
             <span className="mb-1 block text-xs font-medium text-neutral-600">Notes (optional)</span>
             <input className="input" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </label>
+
+          <div className="space-y-2 rounded-xl bg-neutral-50 p-3">
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-neutral-600">Pay now (optional)</span>
+              <input
+                className="input"
+                inputMode="decimal"
+                value={payNow}
+                onChange={(e) => setPayNow(e.target.value)}
+                placeholder="Leave blank if paying later"
+              />
+            </label>
+            {Number(payNow) > 0 && (
+              <div className="flex gap-2">
+                {(['cash', 'upi', 'card'] as PaymentMethod[]).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setPaymentMethod(m)}
+                    className={`flex-1 rounded-lg py-2 text-sm font-semibold capitalize ${
+                      paymentMethod === m ? 'bg-brand-700 text-white' : 'bg-white text-neutral-600'
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="p-5 pt-3">
@@ -346,11 +397,29 @@ const STATUS_LABEL: Record<Purchase['paymentStatus'], string> = {
   paid: 'Paid',
 }
 
-function PurchaseDetailSheet({ purchase, onClose }: { purchase: Purchase; onClose: () => void }) {
+function PurchaseDetailSheet({
+  purchase,
+  onClose,
+  onUpdated,
+}: {
+  purchase: Purchase
+  onClose: () => void
+  onUpdated: (purchase: Purchase) => void
+}) {
   const [lines, setLines] = useState<PurchaseItem[] | null>(null)
+  const [payments, setPayments] = useState<VendorPayment[] | null>(null)
+  const [paying, setPaying] = useState(false)
+
+  function loadPayments() {
+    VendorPaymentApi.listByPurchase(purchase.id).then((list) =>
+      setPayments(list.sort((a, b) => b.paymentDate.localeCompare(a.paymentDate))),
+    )
+  }
 
   useEffect(() => {
     PurchaseItemApi.listByPurchase(purchase.id).then(setLines)
+    loadPayments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [purchase.id])
 
   return (
@@ -384,6 +453,20 @@ function PurchaseDetailSheet({ purchase, onClose }: { purchase: Purchase; onClos
               <span className="text-sm font-semibold text-neutral-900">{formatInr(line.lineTotal)}</span>
             </div>
           ))}
+
+          {payments && payments.length > 0 && (
+            <div className="mt-3">
+              <h3 className="mb-1.5 text-xs font-bold uppercase tracking-wide text-neutral-400">Payments</h3>
+              {payments.map((p) => (
+                <div key={p.id} className="flex items-center justify-between border-b border-neutral-50 py-2">
+                  <p className="text-xs text-neutral-500">
+                    {formatDateLabel(p.paymentDate)} · {p.paymentMethod.toUpperCase()}
+                  </p>
+                  <span className="text-sm font-semibold text-neutral-900">{formatInr(p.amount)}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="p-5 pt-3">
@@ -401,12 +484,140 @@ function PurchaseDetailSheet({ purchase, onClose }: { purchase: Purchase; onClos
             </span>
           </div>
           {purchase.dueDate && (
-            <div className="flex items-center justify-between text-sm text-neutral-500">
+            <div className="mb-1.5 flex items-center justify-between text-sm text-neutral-500">
               <span>Due date</span>
               <span>{formatDateLabel(purchase.dueDate)}</span>
             </div>
           )}
-          {purchase.notes && <p className="mt-2 text-sm text-neutral-500">{purchase.notes}</p>}
+          {purchase.notes && <p className="mb-2 text-sm text-neutral-500">{purchase.notes}</p>}
+
+          {purchase.paymentStatus !== 'paid' && (
+            <button
+              onClick={() => setPaying(true)}
+              className="mt-1 w-full rounded-xl bg-brand-700 py-3 font-semibold text-white active:bg-brand-800"
+            >
+              Record payment
+            </button>
+          )}
+        </div>
+      </div>
+
+      {paying && (
+        <RecordPaymentSheet
+          purchase={purchase}
+          onClose={() => setPaying(false)}
+          onSaved={(updated) => {
+            onUpdated(updated)
+            loadPayments()
+            setPaying(false)
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+function RecordPaymentSheet({
+  purchase,
+  onClose,
+  onSaved,
+}: {
+  purchase: Purchase
+  onClose: () => void
+  onSaved: (purchase: Purchase) => void
+}) {
+  const [amount, setAmount] = useState(String(purchase.balanceDue))
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
+  const [paymentDate, setPaymentDate] = useState(todayIso())
+  const [notes, setNotes] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const parsedAmount = Number(amount)
+  const valid = amount.trim() !== '' && Number.isFinite(parsedAmount) && parsedAmount > 0
+
+  async function handleSubmit() {
+    if (!valid) return
+    setError(null)
+    setBusy(true)
+    try {
+      const updated = await recordVendorPayment(purchase, parsedAmount, {
+        paymentMethod,
+        paymentDate,
+        notes: notes.trim() || undefined,
+      })
+      onSaved(updated)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not record the payment')
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40" onClick={onClose}>
+      <div
+        className="w-full max-w-[480px] md:max-w-[600px] rounded-t-2xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+20px)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-bold text-neutral-900">Record payment</h2>
+          <button onClick={onClose} className="rounded-full p-1 text-neutral-400 active:bg-neutral-100">
+            <CloseIcon className="h-5 w-5" />
+          </button>
+        </div>
+        <p className="mb-3 text-sm text-neutral-500">{formatInr(purchase.balanceDue)} due to {purchase.vendor.name}</p>
+
+        <div className="space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-neutral-600">Amount</span>
+            <input
+              className="input"
+              inputMode="decimal"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              autoFocus
+            />
+          </label>
+          <div>
+            <span className="mb-1 block text-xs font-medium text-neutral-600">Payment method</span>
+            <div className="flex gap-2">
+              {(['cash', 'upi', 'card'] as PaymentMethod[]).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setPaymentMethod(m)}
+                  className={`flex-1 rounded-xl py-2.5 text-sm font-semibold capitalize ${
+                    paymentMethod === m ? 'bg-brand-700 text-white' : 'bg-neutral-100 text-neutral-600'
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-neutral-600">Date</span>
+            <input
+              type="date"
+              className="input"
+              value={paymentDate}
+              onChange={(e) => setPaymentDate(e.target.value)}
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-neutral-600">Notes (optional)</span>
+            <input className="input" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          </label>
+
+          {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+
+          <button
+            onClick={handleSubmit}
+            disabled={busy || !valid}
+            className="w-full rounded-xl bg-brand-700 py-3 font-semibold text-white active:bg-brand-800 disabled:opacity-40"
+          >
+            {busy ? 'Saving…' : `Record ${formatInr(parsedAmount || 0)}`}
+          </button>
         </div>
       </div>
     </div>

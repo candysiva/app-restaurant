@@ -138,3 +138,13 @@ export interface StockTransaction {
   notes?: string
   relatedPurchase?: { id: string; purchaseNumber?: number }
 }
+
+export interface VendorPayment {
+  id: string
+  vendor: { id: string; name?: string }
+  purchase: { id: string; purchaseNumber?: number; total?: number; amountPaid?: number; balanceDue?: number }
+  amount: number
+  paymentMethod: PaymentMethod
+  paymentDate: string
+  notes?: string
+}
