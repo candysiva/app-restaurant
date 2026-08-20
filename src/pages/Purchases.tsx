@@ -5,6 +5,7 @@ import {
   PurchaseItemApi,
   VendorApi,
   VendorPaymentApi,
+  deletePurchase,
   recordVendorPayment,
   submitPurchase,
   type PurchaseLine,
@@ -12,8 +13,9 @@ import {
 import type { PaymentMethod, Purchase, PurchaseItem, Vendor, VendorPayment } from '../lib/types'
 import { dateIso, formatDateLabel, formatInr, formatQtyWithUnit, round2, todayIso } from '../lib/format'
 import { ApiError } from '../lib/api'
-import { CloseIcon, PlusIcon } from '../components/icons'
+import { CloseIcon, PlusIcon, TrashIcon } from '../components/icons'
 import { useCachedFetch } from '../lib/cache'
+import { useConfirm } from '../lib/confirm'
 
 type RangeTab = 'today' | 'week' | 'all'
 type StatusFilter = 'all' | Purchase['paymentStatus']
@@ -167,6 +169,10 @@ export function Purchases() {
           onUpdated={(updated) => {
             setViewing(updated)
             mutate((prev) => (prev ?? []).map((p) => (p.id === updated.id ? updated : p)))
+          }}
+          onDeleted={(id) => {
+            setViewing(null)
+            mutate((prev) => (prev ?? []).filter((p) => p.id !== id))
           }}
         />
       )}
@@ -436,14 +442,19 @@ function PurchaseDetailSheet({
   purchase,
   onClose,
   onUpdated,
+  onDeleted,
 }: {
   purchase: Purchase
   onClose: () => void
   onUpdated: (purchase: Purchase) => void
+  onDeleted: (id: string) => void
 }) {
   const [lines, setLines] = useState<PurchaseItem[] | null>(null)
   const [payments, setPayments] = useState<VendorPayment[] | null>(null)
   const [paying, setPaying] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const confirmDialog = useConfirm()
 
   function loadPayments() {
     VendorPaymentApi.listByPurchase(purchase.id).then((list) =>
@@ -456,6 +467,26 @@ function PurchaseDetailSheet({
     loadPayments()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [purchase.id])
+
+  async function handleDelete() {
+    const ok = await confirmDialog({
+      title: `Delete purchase #${purchase.purchaseNumber}?`,
+      message:
+        'This removes the purchase and its line items, reverses the stock it added, and deletes any payments recorded against it. This cannot be undone.',
+      confirmLabel: 'Delete',
+      danger: true,
+    })
+    if (!ok) return
+    setDeleteError(null)
+    setDeleting(true)
+    try {
+      await deletePurchase(purchase)
+      onDeleted(purchase.id)
+    } catch (err) {
+      setDeleteError(err instanceof ApiError ? err.message : 'Could not delete this purchase')
+      setDeleting(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40" onClick={onClose}>
@@ -526,14 +557,24 @@ function PurchaseDetailSheet({
           )}
           {purchase.notes && <p className="mb-2 text-sm text-neutral-500">{purchase.notes}</p>}
 
+          {deleteError && <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{deleteError}</p>}
+
           {purchase.paymentStatus !== 'paid' && (
             <button
               onClick={() => setPaying(true)}
-              className="mt-1 w-full rounded-xl bg-brand-700 py-3 font-semibold text-white active:bg-brand-800"
+              disabled={deleting}
+              className="mt-1 w-full rounded-xl bg-brand-700 py-3 font-semibold text-white active:bg-brand-800 disabled:opacity-60"
             >
               Record payment
             </button>
           )}
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600 active:bg-red-50 disabled:opacity-60"
+          >
+            <TrashIcon className="h-4 w-4" /> {deleting ? 'Deleting…' : 'Delete purchase'}
+          </button>
         </div>
       </div>
 

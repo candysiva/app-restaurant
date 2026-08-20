@@ -3,8 +3,9 @@ import { OtherExpenseApi } from '../lib/data'
 import type { ExpenseCategory, OtherExpense, PaymentMethod } from '../lib/types'
 import { dateIso, formatDateLabel, formatInr, round2, todayIso } from '../lib/format'
 import { ApiError } from '../lib/api'
-import { CloseIcon, PlusIcon } from '../components/icons'
+import { CloseIcon, PlusIcon, TrashIcon } from '../components/icons'
 import { useCachedFetch } from '../lib/cache'
+import { useConfirm } from '../lib/confirm'
 
 type RangeTab = 'today' | 'week' | 'all'
 
@@ -38,6 +39,7 @@ export function OtherExpenses() {
     mutate,
   } = useCachedFetch(`other-expenses:${range}`, () => fetchExpenses(range))
   const [adding, setAdding] = useState(false)
+  const [editing, setEditing] = useState<OtherExpense | null>(null)
 
   const expenses = rawExpenses ?? EMPTY_EXPENSES
   const error = fetchError ? (fetchError instanceof ApiError ? fetchError.message : 'Could not load expenses') : null
@@ -90,7 +92,11 @@ export function OtherExpenses() {
 
       <div className="flex-1 divide-y divide-neutral-100 px-4">
         {expenses.map((e) => (
-          <div key={e.id} className="flex items-center justify-between py-3">
+          <button
+            key={e.id}
+            onClick={() => setEditing(e)}
+            className="flex w-full items-center justify-between py-3 text-left"
+          >
             <div>
               <p className="font-medium text-neutral-900">
                 {CATEGORY_LABEL[e.category]}
@@ -101,7 +107,7 @@ export function OtherExpenses() {
               </p>
             </div>
             <span className="font-semibold text-neutral-900">{formatInr(e.amount)}</span>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -111,6 +117,21 @@ export function OtherExpenses() {
           onSaved={(expense) => {
             mutate((prev) => [expense, ...(prev ?? [])])
             setAdding(false)
+          }}
+        />
+      )}
+
+      {editing && (
+        <EditOtherExpenseSheet
+          expense={editing}
+          onClose={() => setEditing(null)}
+          onSaved={(updated) => {
+            mutate((prev) => (prev ?? []).map((e) => (e.id === updated.id ? updated : e)))
+            setEditing(null)
+          }}
+          onDeleted={(id) => {
+            mutate((prev) => (prev ?? []).filter((e) => e.id !== id))
+            setEditing(null)
           }}
         />
       )}
@@ -230,6 +251,157 @@ function OtherExpenseSheet({
           >
             {busy ? 'Saving…' : `Save · ${formatInr(parsedAmount || 0)}`}
           </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function EditOtherExpenseSheet({
+  expense,
+  onClose,
+  onSaved,
+  onDeleted,
+}: {
+  expense: OtherExpense
+  onClose: () => void
+  onSaved: (expense: OtherExpense) => void
+  onDeleted: (id: string) => void
+}) {
+  const [category, setCategory] = useState<ExpenseCategory>(expense.category)
+  const [amount, setAmount] = useState(String(expense.amount))
+  const [expenseDate, setExpenseDate] = useState(expense.expenseDate)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(expense.paymentMethod)
+  const [payee, setPayee] = useState(expense.payee ?? '')
+  const [notes, setNotes] = useState(expense.notes ?? '')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const confirmDialog = useConfirm()
+
+  const parsedAmount = round2(Number(amount))
+  const valid = amount.trim() !== '' && Number.isFinite(parsedAmount) && parsedAmount > 0
+
+  async function handleSubmit() {
+    if (!valid) return
+    setError(null)
+    setBusy(true)
+    try {
+      const updated = await OtherExpenseApi.update(expense.id, {
+        category,
+        amount: parsedAmount,
+        expenseDate,
+        paymentMethod,
+        payee: payee.trim() || undefined,
+        notes: notes.trim() || undefined,
+      })
+      onSaved({ ...expense, ...updated })
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not save changes')
+      setBusy(false)
+    }
+  }
+
+  async function handleDelete() {
+    const ok = await confirmDialog({
+      title: 'Delete this expense?',
+      message: 'This removes the expense record permanently. This cannot be undone.',
+      confirmLabel: 'Delete',
+      danger: true,
+    })
+    if (!ok) return
+    setError(null)
+    setBusy(true)
+    try {
+      await OtherExpenseApi.remove(expense.id)
+      onDeleted(expense.id)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not delete this expense')
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40" onClick={onClose}>
+      <div
+        className="flex max-h-[90dvh] w-full max-w-[480px] md:max-w-[600px] flex-col rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-neutral-100 p-5 pb-3">
+          <h2 className="text-base font-bold text-neutral-900">Edit expense</h2>
+          <button onClick={onClose} className="rounded-full p-1 text-neutral-400 active:bg-neutral-100">
+            <CloseIcon className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 space-y-3 overflow-y-auto px-5 py-3">
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-neutral-600">Category</span>
+            <select className="input" value={category} onChange={(e) => setCategory(e.target.value as ExpenseCategory)}>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {CATEGORY_LABEL[c]}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-neutral-600">Amount</span>
+            <input className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-neutral-600">Date</span>
+            <input type="date" className="input" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} />
+          </label>
+
+          <div>
+            <span className="mb-1 block text-xs font-medium text-neutral-600">Payment method</span>
+            <div className="flex gap-2">
+              {(['cash', 'upi', 'card'] as PaymentMethod[]).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setPaymentMethod(m)}
+                  className={`flex-1 rounded-xl py-2.5 text-sm font-semibold capitalize ${
+                    paymentMethod === m ? 'bg-brand-700 text-white' : 'bg-neutral-100 text-neutral-600'
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-neutral-600">Payee (optional)</span>
+            <input className="input" value={payee} onChange={(e) => setPayee(e.target.value)} placeholder="e.g. TNEB" />
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-neutral-600">Notes (optional)</span>
+            <input className="input" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          </label>
+        </div>
+
+        <div className="p-5 pt-3">
+          {error && <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              onClick={handleDelete}
+              disabled={busy}
+              className="flex items-center justify-center rounded-xl border border-red-200 px-4 py-3 text-red-600 active:bg-red-50 disabled:opacity-60"
+            >
+              <TrashIcon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={busy || !valid}
+              className="flex-1 rounded-xl bg-brand-700 py-3 font-semibold text-white active:bg-brand-800 disabled:opacity-60"
+            >
+              {busy ? 'Saving…' : 'Save changes'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

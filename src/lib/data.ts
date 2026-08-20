@@ -229,6 +229,7 @@ export const PurchaseApi = {
   listUnpaid: () => api.get<Purchase>('/purchases?paymentStatus[in]=unpaid,partial&limit=200'),
   create: (data: Omit<Purchase, 'id'>) => api.post<Purchase>('/purchases', data),
   update: (id: string, data: Partial<Purchase>) => api.patch<Purchase>(`/purchases/${id}`, data),
+  remove: (id: string) => api.del(`/purchases/${id}`),
 }
 
 export const PurchaseItemApi = {
@@ -245,10 +246,12 @@ export const PurchaseItemApi = {
     lineTotal: number
     purchaseDate: string
   }) => api.post<PurchaseItem>('/purchase_items', data),
+  remove: (id: string) => api.del(`/purchase_items/${id}`),
 }
 
 export const StockTransactionApi = {
   listByMaterial: (materialId: string) => fetchAll<StockTransaction>('/stock_transactions', { material: materialId }),
+  listByPurchase: (purchaseId: string) => api.get<StockTransaction>(`/stock_transactions?relatedPurchase=${purchaseId}&limit=200`),
   listInRange: (fromDate: string, toDate: string) =>
     fetchAll<StockTransaction>('/stock_transactions', { 'transactionDate[gte]': fromDate, 'transactionDate[lte]': toDate }),
   create: (data: {
@@ -260,6 +263,7 @@ export const StockTransactionApi = {
     notes?: string
     relatedPurchase?: { id: string }
   }) => api.post<StockTransaction>('/stock_transactions', data),
+  remove: (id: string) => api.del(`/stock_transactions/${id}`),
 }
 
 export const VendorPaymentApi = {
@@ -275,6 +279,7 @@ export const VendorPaymentApi = {
     paymentDate: string
     notes?: string
   }) => api.post<VendorPayment>('/vendor_payments', data),
+  remove: (id: string) => api.del(`/vendor_payments/${id}`),
 }
 
 /**
@@ -422,6 +427,45 @@ export async function submitPurchase(
 }
 
 /**
+ * Fully undoes a wrongly-recorded purchase: reverses the stock it added (per material,
+ * aggregated the same way submitPurchase applies it — so this is a true inverse), then
+ * deletes its stock_transactions, purchase_items, any vendor_payments recorded against
+ * it, and finally the purchase itself. Not clamped — if usage already ate into that
+ * stock, letting the reversal go negative is the same "something's off, go check"
+ * signal the app already relies on elsewhere, not something to silently hide.
+ */
+export async function deletePurchase(purchase: Purchase): Promise<void> {
+  const [items, stockTxns, payments, materials] = await Promise.all([
+    PurchaseItemApi.listByPurchase(purchase.id),
+    StockTransactionApi.listByPurchase(purchase.id),
+    VendorPaymentApi.listByPurchase(purchase.id),
+    MaterialApi.list(),
+  ])
+
+  const materialById = new Map(materials.map((m) => [m.id, m]))
+  const quantityByMaterial = new Map<string, number>()
+  for (const item of items) {
+    quantityByMaterial.set(item.material.id, round2((quantityByMaterial.get(item.material.id) ?? 0) + item.quantity))
+  }
+
+  await Promise.all(
+    [...quantityByMaterial.entries()].map(([materialId, quantity]) => {
+      const material = materialById.get(materialId)
+      if (!material) return Promise.resolve()
+      return MaterialApi.update(materialId, { currentStock: round2(material.currentStock - quantity) })
+    }),
+  )
+
+  await Promise.all([
+    ...stockTxns.map((t) => StockTransactionApi.remove(t.id)),
+    ...items.map((i) => PurchaseItemApi.remove(i.id)),
+    ...payments.map((p) => VendorPaymentApi.remove(p.id)),
+  ])
+
+  await PurchaseApi.remove(purchase.id)
+}
+
+/**
  * Logs a manual stock movement (usage/wastage/adjustment) and updates the material's
  * running currentStock. Not clamped at 0 — a negative balance is a useful signal that
  * a purchase was never logged, not something to hide.
@@ -473,6 +517,18 @@ export const SalaryPaymentApi = {
     paymentMethod: PaymentMethod
     notes?: string
   }) => api.post<SalaryPayment>('/salary_payments', data),
+  update: (
+    id: string,
+    data: Partial<{
+      amount: number
+      periodStart: string
+      periodEnd: string
+      paymentDate: string
+      paymentMethod: PaymentMethod
+      notes: string
+    }>,
+  ) => api.patch<SalaryPayment>(`/salary_payments/${id}`, data),
+  remove: (id: string) => api.del(`/salary_payments/${id}`),
 }
 
 export const OtherExpenseApi = {

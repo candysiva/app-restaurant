@@ -61,15 +61,17 @@ Day-to-day stock work happens in the **Stock** nav tab, not More: materials at o
 
 A purchase tracks **amount paid**, **balance due**, and a **payment status** (Unpaid / Partially paid / Paid). Each row in the Purchases list shows the bill total, and — for any unpaid or partially-paid purchase — the outstanding **due amount** highlighted in red right below it, so what still needs paying is visible at a glance without opening every purchase. Open any unpaid or partially-paid purchase to see its payment history and **Record payment** — the amount field defaults to the remaining balance, but can be overridden for a partial payment; recording brings the balance down (and the status up) automatically. Below the Today/Last 7 days/All range tabs, the Purchases list can also be filtered to just Unpaid, Partially paid, or Paid purchases — handy for quickly finding what still needs paying. **More → Vendors** shows each vendor's total outstanding balance (summed across all their purchases) so you can see who's owed money at a glance. Due dates set on a purchase aren't surfaced anywhere yet beyond the purchase's own detail view — a dedicated "what's coming due" view is a possible follow-up.
 
+**Wrongly recorded a purchase?** Open it and hit **Delete purchase** — this reverses the stock it added, removes its line items and any payments recorded against it, and deletes the purchase itself. There's no in-place edit for line items/prices (undoing and redoing that correctly means unwinding stock and payment state too), so for a mistake in quantities or price, delete and re-record it; if only the vendor, date, or notes were wrong, deleting and redoing the whole purchase is admittedly more than the mistake deserves — a lighter header-only edit is a possible follow-up.
+
 ## Employees &amp; salaries
 
 Owners manage **Employees** (master data — name, phone, role, pay frequency, pay rate) from **More → Employees**, the same add/edit/deactivate pattern as Vendors. Pay frequency and pay rate are informational only — a reminder of what an employee is normally owed — nothing is auto-calculated or auto-paid from them.
 
-**More → Salaries** is a manual payment log: pick an employee (their pay rate pre-fills the amount, editable), set the period the payment covers (e.g. "week of Aug 11 – Aug 17"), a payment date and method, and save. There's no attendance or time-clock tracking — recording what was actually paid, for whatever period you say it covers, is the whole feature. Today / last 7 days / all-time tabs match the Purchases screen.
+**More → Salaries** is a manual payment log: pick an employee (their pay rate pre-fills the amount, editable), set the period the payment covers (e.g. "week of Aug 11 – Aug 17"), a payment date and method, and save. There's no attendance or time-clock tracking — recording what was actually paid, for whatever period you say it covers, is the whole feature. Today / last 7 days / all-time tabs match the Purchases screen. Tap any entry to **edit or delete** it — a salary payment has no side effects on other data, so corrections are immediate.
 
 ## Other expenses
 
-**More → Other expenses** logs anything that isn't a vendor purchase or a salary — rent, electricity, gas, water, repairs, transport, license/tax, or miscellaneous. Each entry has a category, amount, date, payment method, and an optional payee (e.g. "TNEB") and notes. Same Today / last 7 days / all-time tabs as Purchases and Salaries.
+**More → Other expenses** logs anything that isn't a vendor purchase or a salary — rent, electricity, gas, water, repairs, transport, license/tax, or miscellaneous. Each entry has a category, amount, date, payment method, and an optional payee (e.g. "TNEB") and notes. Same Today / last 7 days / all-time tabs as Purchases and Salaries, and the same tap-to-**edit or delete** as Salaries.
 
 ## Net profit
 
