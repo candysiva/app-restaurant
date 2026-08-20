@@ -71,7 +71,11 @@ Owners manage **Employees** (master data — name, phone, role, pay frequency, p
 
 ## Other expenses
 
-**More → Other expenses** logs anything that isn't a vendor purchase or a salary — rent, electricity, gas, water, repairs, transport, license/tax, or miscellaneous. Each entry has a category, amount, date, payment method, and an optional payee (e.g. "TNEB") and notes. Same Today / last 7 days / all-time tabs as Purchases and Salaries, and the same tap-to-**edit or delete** as Salaries.
+**More → Other expenses** logs anything that isn't a vendor purchase or a salary — rent, electricity, repairs, transport, or whatever else the shop pays for. Each entry has a category, amount, date, payment method, and an optional payee (e.g. "TNEB") and notes. Same Today / last 7 days / all-time tabs as Purchases and Salaries, and the same tap-to-**edit or delete** as Salaries.
+
+Expense categories are owner-managed, the same way menu categories are: **More → Expense categories** to add, rename, reorder, or delete (deleting is blocked while any expense still uses that category). New shops start with zero expense categories; the screen offers a one-tap "add starter categories" shortcut (Rent, Electricity, Gas, Water, Repairs, Transport, License / tax, Miscellaneous), or add your own from scratch. An expense category needs to exist before you can log an expense.
+
+**Migrating from before this feature:** other-expense entries logged before categories existed show up as "Uncategorized" in the list — open each one and pick a category to file it properly.
 
 ## Net profit
 

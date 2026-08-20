@@ -172,19 +172,9 @@ export interface SalaryPayment {
   notes?: string
 }
 
-export type ExpenseCategory =
-  | 'rent'
-  | 'electricity'
-  | 'gas'
-  | 'water'
-  | 'repairs'
-  | 'transport'
-  | 'license_tax'
-  | 'misc'
-
 export interface OtherExpense {
   id: string
-  category: ExpenseCategory
+  category: CategoryItem | null
   amount: number
   expenseDate: string
   paymentMethod: PaymentMethod

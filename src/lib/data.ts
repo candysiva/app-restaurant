@@ -3,7 +3,6 @@ import { round2, todayIso } from './format'
 import type {
   CategoryItem,
   Employee,
-  ExpenseCategory,
   Material,
   MenuItem,
   Order,
@@ -541,17 +540,84 @@ export const SalaryPaymentApi = {
   remove: (id: string) => api.del(`/salary_payments/${id}`),
 }
 
+export const ExpenseCategoryApi = {
+  list: () => api.get<CategoryItem>('/expense_categories?limit=200'),
+  create: (name: string, sortOrder?: number) =>
+    api.post<CategoryItem>('/expense_categories', sortOrder === undefined ? { name } : { name, sortOrder }),
+  update: (id: string, data: Partial<{ name: string; sortOrder: number }>) =>
+    api.patch<CategoryItem>(`/expense_categories/${id}`, data),
+  remove: (id: string) => api.del(`/expense_categories/${id}`),
+}
+
+interface RawOtherExpense {
+  id: string
+  categoryRef?: { id: string; name?: string } | null
+  amount: number
+  expenseDate: string
+  paymentMethod: PaymentMethod
+  payee?: string
+  notes?: string
+}
+
+function toOtherExpense(raw: RawOtherExpense): OtherExpense {
+  return {
+    id: raw.id,
+    category: raw.categoryRef ? { id: raw.categoryRef.id, name: raw.categoryRef.name ?? '' } : null,
+    amount: raw.amount,
+    expenseDate: raw.expenseDate,
+    paymentMethod: raw.paymentMethod,
+    payee: raw.payee,
+    notes: raw.notes,
+  }
+}
+
 export const OtherExpenseApi = {
-  listInRange: (fromDate: string, toDate: string) =>
-    fetchAll<OtherExpense>('/other_expenses', { 'expenseDate[gte]': fromDate, 'expenseDate[lte]': toDate, sort: '-expenseDate' }),
-  create: (data: {
-    category: ExpenseCategory
+  list: async () => (await api.get<RawOtherExpense>('/other_expenses?limit=200')).map(toOtherExpense),
+  listInRange: async (fromDate: string, toDate: string) =>
+    (
+      await fetchAll<RawOtherExpense>('/other_expenses', {
+        'expenseDate[gte]': fromDate,
+        'expenseDate[lte]': toDate,
+        sort: '-expenseDate',
+      })
+    ).map(toOtherExpense),
+  create: async (data: {
+    category: CategoryItem
     amount: number
     expenseDate: string
     paymentMethod: PaymentMethod
     payee?: string
     notes?: string
-  }) => api.post<OtherExpense>('/other_expenses', data),
-  update: (id: string, data: Partial<Omit<OtherExpense, 'id'>>) => api.patch<OtherExpense>(`/other_expenses/${id}`, data),
+  }) =>
+    toOtherExpense(
+      await api.post<RawOtherExpense>('/other_expenses', {
+        categoryRef: { id: data.category.id },
+        categoryName: data.category.name,
+        amount: data.amount,
+        expenseDate: data.expenseDate,
+        paymentMethod: data.paymentMethod,
+        payee: data.payee,
+        notes: data.notes,
+      }),
+    ),
+  update: async (
+    id: string,
+    data: Partial<{
+      category: CategoryItem
+      amount: number
+      expenseDate: string
+      paymentMethod: PaymentMethod
+      payee?: string
+      notes?: string
+    }>,
+  ) => {
+    const body: Record<string, unknown> = { ...data }
+    if (data.category) {
+      body.categoryRef = { id: data.category.id }
+      body.categoryName = data.category.name
+      delete body.category
+    }
+    return toOtherExpense(await api.patch<RawOtherExpense>(`/other_expenses/${id}`, body))
+  },
   remove: (id: string) => api.del(`/other_expenses/${id}`),
 }

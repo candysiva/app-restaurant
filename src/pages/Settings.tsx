@@ -15,6 +15,7 @@ import {
 } from '../components/icons'
 import { StaffSheet } from './StaffSheet'
 import { CategoriesSheet } from './CategoriesSheet'
+import { ExpenseCategoriesSheet } from './ExpenseCategoriesSheet'
 import { MenuSheet } from './MenuSheet'
 import { VendorsSheet } from './VendorsSheet'
 import { MaterialsSheet } from './MaterialsSheet'
@@ -28,6 +29,7 @@ export function Settings() {
   const [showMenu, setShowMenu] = useState(false)
   const [showStaff, setShowStaff] = useState(false)
   const [showCategories, setShowCategories] = useState(false)
+  const [showExpenseCategories, setShowExpenseCategories] = useState(false)
   const [showVendors, setShowVendors] = useState(false)
   const [showMaterials, setShowMaterials] = useState(false)
   const [showEmployees, setShowEmployees] = useState(false)
@@ -129,6 +131,14 @@ export function Settings() {
                 <span className="text-neutral-300">›</span>
               </button>
               <button
+                onClick={() => setShowExpenseCategories(true)}
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+              >
+                <WalletIcon className="h-5 w-5 text-neutral-400" />
+                <span className="flex-1 text-sm font-medium text-neutral-900">Expense categories</span>
+                <span className="text-neutral-300">›</span>
+              </button>
+              <button
                 onClick={() => setShowMaterials(true)}
                 className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
               >
@@ -159,6 +169,7 @@ export function Settings() {
       {showMenu && <MenuSheet onClose={() => setShowMenu(false)} />}
       {showStaff && <StaffSheet onClose={() => setShowStaff(false)} />}
       {showCategories && <CategoriesSheet onClose={() => setShowCategories(false)} />}
+      {showExpenseCategories && <ExpenseCategoriesSheet onClose={() => setShowExpenseCategories(false)} />}
       {showVendors && <VendorsSheet onClose={() => setShowVendors(false)} />}
       {showMaterials && <MaterialsSheet onClose={() => setShowMaterials(false)} />}
       {showEmployees && <EmployeesSheet onClose={() => setShowEmployees(false)} />}

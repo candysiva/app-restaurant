@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { OtherExpenseApi } from '../lib/data'
-import type { ExpenseCategory, OtherExpense, PaymentMethod } from '../lib/types'
+import { ExpenseCategoryApi, OtherExpenseApi, sortCategories } from '../lib/data'
+import type { CategoryItem, OtherExpense, PaymentMethod } from '../lib/types'
 import { dateIso, formatDateLabel, formatInr, round2, todayIso } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { CloseIcon, PlusIcon, TrashIcon } from '../components/icons'
@@ -8,19 +8,6 @@ import { useCachedFetch } from '../lib/cache'
 import { useConfirm } from '../lib/confirm'
 
 type RangeTab = 'today' | 'week' | 'all'
-
-const CATEGORY_LABEL: Record<ExpenseCategory, string> = {
-  rent: 'Rent',
-  electricity: 'Electricity',
-  gas: 'Gas',
-  water: 'Water',
-  repairs: 'Repairs',
-  transport: 'Transport',
-  license_tax: 'License / tax',
-  misc: 'Miscellaneous',
-}
-
-const CATEGORIES = Object.keys(CATEGORY_LABEL) as ExpenseCategory[]
 
 const EMPTY_EXPENSES: OtherExpense[] = []
 
@@ -38,10 +25,13 @@ export function OtherExpenses() {
     error: fetchError,
     mutate,
   } = useCachedFetch(`other-expenses:${range}`, () => fetchExpenses(range))
+  const { data: rawCategories } = useCachedFetch('expense-categories', ExpenseCategoryApi.list)
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<OtherExpense | null>(null)
 
   const expenses = rawExpenses ?? EMPTY_EXPENSES
+  const categories = useMemo(() => sortCategories(rawCategories ?? []), [rawCategories])
+  const noCategories = rawCategories !== null && rawCategories.length === 0
   const error = fetchError ? (fetchError instanceof ApiError ? fetchError.message : 'Could not load expenses') : null
 
   const rangeTotal = useMemo(() => expenses.reduce((sum, e) => sum + e.amount, 0), [expenses])
@@ -53,7 +43,8 @@ export function OtherExpenses() {
           <h1 className="text-lg font-bold text-neutral-900">Other expenses</h1>
           <button
             onClick={() => setAdding(true)}
-            className="flex shrink-0 items-center gap-1 rounded-full bg-brand-700 px-3 py-1.5 text-sm font-semibold text-white active:bg-brand-800"
+            disabled={noCategories}
+            className="flex shrink-0 items-center gap-1 rounded-full bg-brand-700 px-3 py-1.5 text-sm font-semibold text-white active:bg-brand-800 disabled:opacity-40"
           >
             <PlusIcon className="h-4 w-4" /> Add
           </button>
@@ -72,6 +63,12 @@ export function OtherExpenses() {
           ))}
         </div>
       </header>
+
+      {noCategories && (
+        <p className="m-4 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">
+          Add an expense category first — More → Expense categories — before logging an expense.
+        </p>
+      )}
 
       {expenses.length > 0 && (
         <div className="flex items-center justify-between bg-brand-50 px-4 py-2.5 text-sm">
@@ -99,7 +96,7 @@ export function OtherExpenses() {
           >
             <div>
               <p className="font-medium text-neutral-900">
-                {CATEGORY_LABEL[e.category]}
+                {e.category?.name ?? 'Uncategorized'}
                 {e.payee && <span className="text-xs font-normal text-neutral-400"> · {e.payee}</span>}
               </p>
               <p className="text-xs text-neutral-500">
@@ -113,6 +110,7 @@ export function OtherExpenses() {
 
       {adding && (
         <OtherExpenseSheet
+          categories={categories}
           onClose={() => setAdding(false)}
           onSaved={(expense) => {
             mutate((prev) => [expense, ...(prev ?? [])])
@@ -124,6 +122,7 @@ export function OtherExpenses() {
       {editing && (
         <EditOtherExpenseSheet
           expense={editing}
+          categories={categories}
           onClose={() => setEditing(null)}
           onSaved={(updated) => {
             mutate((prev) => (prev ?? []).map((e) => (e.id === updated.id ? updated : e)))
@@ -140,13 +139,15 @@ export function OtherExpenses() {
 }
 
 function OtherExpenseSheet({
+  categories,
   onClose,
   onSaved,
 }: {
+  categories: CategoryItem[]
   onClose: () => void
   onSaved: (expense: OtherExpense) => void
 }) {
-  const [category, setCategory] = useState<ExpenseCategory>('rent')
+  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? '')
   const [amount, setAmount] = useState('')
   const [expenseDate, setExpenseDate] = useState(todayIso())
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
@@ -156,10 +157,11 @@ function OtherExpenseSheet({
   const [error, setError] = useState<string | null>(null)
 
   const parsedAmount = round2(Number(amount))
-  const valid = amount.trim() !== '' && Number.isFinite(parsedAmount) && parsedAmount > 0
+  const category = categories.find((c) => c.id === categoryId)
+  const valid = amount.trim() !== '' && Number.isFinite(parsedAmount) && parsedAmount > 0 && !!category
 
   async function handleSubmit() {
-    if (!valid) return
+    if (!valid || !category) return
     setError(null)
     setBusy(true)
     try {
@@ -194,10 +196,11 @@ function OtherExpenseSheet({
         <div className="flex-1 space-y-3 overflow-y-auto px-5 py-3">
           <label className="block">
             <span className="mb-1 block text-xs font-medium text-neutral-600">Category</span>
-            <select className="input" value={category} onChange={(e) => setCategory(e.target.value as ExpenseCategory)}>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {CATEGORY_LABEL[c]}
+            <select className="input" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+              {categories.length === 0 && <option value="">No categories yet</option>}
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
                 </option>
               ))}
             </select>
@@ -259,16 +262,18 @@ function OtherExpenseSheet({
 
 function EditOtherExpenseSheet({
   expense,
+  categories,
   onClose,
   onSaved,
   onDeleted,
 }: {
   expense: OtherExpense
+  categories: CategoryItem[]
   onClose: () => void
   onSaved: (expense: OtherExpense) => void
   onDeleted: (id: string) => void
 }) {
-  const [category, setCategory] = useState<ExpenseCategory>(expense.category)
+  const [categoryId, setCategoryId] = useState(expense.category?.id ?? categories[0]?.id ?? '')
   const [amount, setAmount] = useState(String(expense.amount))
   const [expenseDate, setExpenseDate] = useState(expense.expenseDate)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(expense.paymentMethod)
@@ -279,10 +284,11 @@ function EditOtherExpenseSheet({
   const confirmDialog = useConfirm()
 
   const parsedAmount = round2(Number(amount))
-  const valid = amount.trim() !== '' && Number.isFinite(parsedAmount) && parsedAmount > 0
+  const category = categories.find((c) => c.id === categoryId)
+  const valid = amount.trim() !== '' && Number.isFinite(parsedAmount) && parsedAmount > 0 && !!category
 
   async function handleSubmit() {
-    if (!valid) return
+    if (!valid || !category) return
     setError(null)
     setBusy(true)
     try {
@@ -336,10 +342,14 @@ function EditOtherExpenseSheet({
         <div className="flex-1 space-y-3 overflow-y-auto px-5 py-3">
           <label className="block">
             <span className="mb-1 block text-xs font-medium text-neutral-600">Category</span>
-            <select className="input" value={category} onChange={(e) => setCategory(e.target.value as ExpenseCategory)}>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {CATEGORY_LABEL[c]}
+            <select className="input" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+              {expense.category && !categories.some((c) => c.id === expense.category!.id) && (
+                <option value={expense.category.id}>{expense.category.name}</option>
+              )}
+              {categories.length === 0 && !expense.category && <option value="">No categories yet</option>}
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
                 </option>
               ))}
             </select>
