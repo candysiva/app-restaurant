@@ -10,7 +10,7 @@ import {
   type PurchaseLine,
 } from '../lib/data'
 import type { PaymentMethod, Purchase, PurchaseItem, Vendor, VendorPayment } from '../lib/types'
-import { dateIso, formatDateLabel, formatInr, formatQtyWithUnit, todayIso } from '../lib/format'
+import { dateIso, formatDateLabel, formatInr, formatQtyWithUnit, round2, todayIso } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { CloseIcon, PlusIcon } from '../components/icons'
 import { useCachedFetch } from '../lib/cache'
@@ -219,8 +219,8 @@ function PurchaseSheet({
 
   function addLine() {
     const material = activeMaterials.find((m) => m.id === materialId)
-    const qty = Number(quantity)
-    const price = Number(unitPrice)
+    const qty = round2(Number(quantity))
+    const price = round2(Number(unitPrice))
     if (!material || !Number.isFinite(qty) || qty <= 0 || !Number.isFinite(price) || price <= 0) return
     setLines((prev) => [...prev, { material, quantity: qty, unitPrice: price }])
     setMaterialId('')

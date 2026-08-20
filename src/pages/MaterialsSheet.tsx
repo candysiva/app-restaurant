@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { MaterialApi } from '../lib/data'
 import type { Material, MaterialUnit } from '../lib/types'
-import { formatQtyWithUnit } from '../lib/format'
+import { formatQtyWithUnit, round2 } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { AlertTriangleIcon, CloseIcon, TrashIcon } from '../components/icons'
 
@@ -33,7 +33,7 @@ export function MaterialsSheet({ onClose }: { onClose: () => void }) {
       const created = await MaterialApi.create({
         name: name.trim(),
         unit,
-        minStockThreshold: Number(minStockThreshold) || 0,
+        minStockThreshold: round2(Number(minStockThreshold) || 0),
       })
       setMaterials((prev) => [...(prev ?? []), created].sort((a, b) => a.name.localeCompare(b.name)))
       setName('')
@@ -187,7 +187,7 @@ function EditMaterialSheet({
       const updated = await MaterialApi.update(material.id, {
         name: name.trim(),
         unit,
-        minStockThreshold: Number(minStockThreshold) || 0,
+        minStockThreshold: round2(Number(minStockThreshold) || 0),
       })
       onSaved({ ...material, ...updated })
     } catch (err) {

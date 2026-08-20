@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { OtherExpenseApi } from '../lib/data'
 import type { ExpenseCategory, OtherExpense, PaymentMethod } from '../lib/types'
-import { dateIso, formatDateLabel, formatInr, todayIso } from '../lib/format'
+import { dateIso, formatDateLabel, formatInr, round2, todayIso } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { CloseIcon, PlusIcon } from '../components/icons'
 import { useCachedFetch } from '../lib/cache'
@@ -134,7 +134,7 @@ function OtherExpenseSheet({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const parsedAmount = Number(amount)
+  const parsedAmount = round2(Number(amount))
   const valid = amount.trim() !== '' && Number.isFinite(parsedAmount) && parsedAmount > 0
 
   async function handleSubmit() {

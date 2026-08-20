@@ -1,5 +1,5 @@
 import { api, qs } from './api'
-import { todayIso } from './format'
+import { round2, todayIso } from './format'
 import type {
   CategoryItem,
   Employee,
@@ -168,8 +168,8 @@ export async function submitOrder(
 ): Promise<Order> {
   const now = new Date()
   const orderDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  const total = cart.reduce((sum, line) => sum + line.menuItem.price * line.quantity, 0)
-  const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0)
+  const total = round2(cart.reduce((sum, line) => sum + line.menuItem.price * line.quantity, 0))
+  const itemCount = round2(cart.reduce((sum, line) => sum + line.quantity, 0))
 
   const order = await OrderApi.create({
     orderNumber: await nextOrderNumber(orderDate),
@@ -191,8 +191,8 @@ export async function submitOrder(
         categoryName: line.menuItem.category?.name ?? 'Uncategorized',
         priceType: line.menuItem.priceType,
         unitPrice: line.menuItem.price,
-        quantity: line.quantity,
-        lineTotal: line.menuItem.price * line.quantity,
+        quantity: round2(line.quantity),
+        lineTotal: round2(line.menuItem.price * line.quantity),
         orderDate,
       }),
     ),
@@ -289,14 +289,15 @@ export async function recordVendorPayment(
   opts: { paymentMethod: PaymentMethod; paymentDate?: string; notes?: string },
 ): Promise<Purchase> {
   const paymentDate = opts.paymentDate ?? todayIso()
-  const newAmountPaid = purchase.amountPaid + amount
-  const newBalanceDue = Math.max(0, purchase.total - newAmountPaid)
+  const roundedAmount = round2(amount)
+  const newAmountPaid = round2(purchase.amountPaid + roundedAmount)
+  const newBalanceDue = round2(Math.max(0, purchase.total - newAmountPaid))
   const paymentStatus: Purchase['paymentStatus'] = newBalanceDue <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : 'unpaid'
 
   await VendorPaymentApi.create({
     vendor: { id: purchase.vendor.id },
     purchase: { id: purchase.id },
-    amount,
+    amount: roundedAmount,
     paymentMethod: opts.paymentMethod,
     paymentDate,
     notes: opts.notes,
@@ -344,10 +345,10 @@ export async function submitPurchase(
 ): Promise<Purchase> {
   const now = new Date()
   const purchaseDate = opts.purchaseDate ?? todayIso()
-  const total = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0)
+  const total = round2(lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0))
   const itemCount = lines.length
-  const amountPaid = Math.min(Math.max(0, opts.initialPayment ?? 0), total)
-  const balanceDue = total - amountPaid
+  const amountPaid = round2(Math.min(Math.max(0, opts.initialPayment ?? 0), total))
+  const balanceDue = round2(total - amountPaid)
   const paymentStatus: Purchase['paymentStatus'] = balanceDue <= 0 ? 'paid' : amountPaid > 0 ? 'partial' : 'unpaid'
 
   const purchase = await PurchaseApi.create({
@@ -381,9 +382,9 @@ export async function submitPurchase(
         material: { id: line.material.id },
         materialName: line.material.name,
         unit: line.material.unit,
-        quantity: line.quantity,
-        unitPrice: line.unitPrice,
-        lineTotal: line.quantity * line.unitPrice,
+        quantity: round2(line.quantity),
+        unitPrice: round2(line.unitPrice),
+        lineTotal: round2(line.quantity * line.unitPrice),
         purchaseDate,
       }),
     ),
@@ -396,13 +397,13 @@ export async function submitPurchase(
   const quantityByMaterial = new Map<string, { material: Material; quantity: number }>()
   for (const line of lines) {
     const existing = quantityByMaterial.get(line.material.id)
-    if (existing) existing.quantity += line.quantity
-    else quantityByMaterial.set(line.material.id, { material: line.material, quantity: line.quantity })
+    if (existing) existing.quantity = round2(existing.quantity + line.quantity)
+    else quantityByMaterial.set(line.material.id, { material: line.material, quantity: round2(line.quantity) })
   }
 
   await Promise.all(
     [...quantityByMaterial.values()].map(({ material, quantity }) => {
-      const newStock = material.currentStock + quantity
+      const newStock = round2(material.currentStock + quantity)
       return Promise.all([
         StockTransactionApi.create({
           material: { id: material.id },
@@ -432,12 +433,13 @@ export async function logStockTransaction(
   opts: { transactionDate?: string; notes?: string } = {},
 ): Promise<StockTransaction> {
   const direction = type === 'adjustment_in' ? 1 : -1
-  const newStock = material.currentStock + direction * quantity
+  const roundedQuantity = round2(quantity)
+  const newStock = round2(material.currentStock + direction * roundedQuantity)
   const [txn] = await Promise.all([
     StockTransactionApi.create({
       material: { id: material.id },
       type,
-      quantity,
+      quantity: roundedQuantity,
       balanceAfter: newStock,
       transactionDate: opts.transactionDate ?? todayIso(),
       notes: opts.notes,

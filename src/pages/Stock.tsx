@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { MaterialApi, logStockTransaction } from '../lib/data'
 import type { Material, StockTxnType } from '../lib/types'
-import { formatQtyWithUnit, todayIso } from '../lib/format'
+import { formatQtyWithUnit, round2, todayIso } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { AlertTriangleIcon, CloseIcon } from '../components/icons'
 import { useCachedFetch } from '../lib/cache'
@@ -133,11 +133,11 @@ function LogStockSheet({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const parsedQty = Number(quantity)
+  const parsedQty = round2(Number(quantity))
   const valid = quantity.trim() !== '' && Number.isFinite(parsedQty) && parsedQty > 0
 
   const direction = type === 'adjustment_in' ? 1 : -1
-  const resultingStock = valid ? material.currentStock + direction * parsedQty : material.currentStock
+  const resultingStock = valid ? round2(material.currentStock + direction * parsedQty) : material.currentStock
 
   async function handleSubmit() {
     if (!valid) return

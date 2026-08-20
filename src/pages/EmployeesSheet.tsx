@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { EmployeeApi } from '../lib/data'
 import type { Employee, PayFrequency } from '../lib/types'
-import { formatInr } from '../lib/format'
+import { formatInr, round2 } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { CloseIcon, TrashIcon } from '../components/icons'
 import { useConfirm } from '../lib/confirm'
@@ -31,7 +31,7 @@ export function EmployeesSheet({ onClose }: { onClose: () => void }) {
 
   async function handleAdd(e: FormEvent) {
     e.preventDefault()
-    const rate = Number(payRate)
+    const rate = round2(Number(payRate))
     if (!name.trim() || !rate || rate <= 0) return
     setError(null)
     setBusy(true)
@@ -176,7 +176,7 @@ function EditEmployeeSheet({
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    const rate = Number(payRate)
+    const rate = round2(Number(payRate))
     if (!name.trim() || !rate || rate <= 0) return
     setError(null)
     setBusy(true)

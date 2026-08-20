@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { OrderApi, OrderItemApi, OtherExpenseApi, SalaryPaymentApi, VendorPaymentApi } from '../lib/data'
 import type { Order, OrderItem, OtherExpense, SalaryPayment, VendorPayment } from '../lib/types'
-import { dateIso, formatDateLabel, formatInr, todayIso } from '../lib/format'
+import { dateIso, formatDateLabel, formatInr, round2, todayIso } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { useCachedFetch } from '../lib/cache'
 
@@ -370,7 +370,7 @@ export function Dashboard() {
                         <div>
                           <p className="text-sm font-medium text-neutral-900">{item.name}</p>
                           <p className="text-xs text-neutral-500">
-                            {item.category} · {item.qty}
+                            {item.category} · {round2(item.qty)}
                             {item.priceType === 'per_kg' ? ' kg sold' : ' sold'}
                           </p>
                         </div>

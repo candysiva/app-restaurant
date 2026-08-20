@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { CategoryApi, MenuApi, sortCategories, submitOrder, type CartLine } from '../lib/data'
 import type { MenuItem, PaymentMethod } from '../lib/types'
-import { formatInr } from '../lib/format'
+import { formatInr, round2 } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { CloseIcon, MinusIcon, PlusIcon } from '../components/icons'
 import { useCachedFetch } from '../lib/cache'
@@ -242,10 +242,10 @@ function WeighSheet({
   const [amount, setAmount] = useState('')
   const parsedAmount = Number(amount)
   const validAmount = amount.trim() !== '' && Number.isFinite(parsedAmount) && parsedAmount > 0
-  const kgFromAmount = validAmount ? Math.round((parsedAmount / item.price) * 1000) / 1000 : 0
+  const kgFromAmount = validAmount ? round2(parsedAmount / item.price) : 0
 
   const valid = mode === 'weight' ? validKg : validAmount && kgFromAmount > 0
-  const resultKg = mode === 'weight' ? parsedKg : kgFromAmount
+  const resultKg = mode === 'weight' ? round2(parsedKg) : kgFromAmount
 
   return (
     <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40" onClick={onClose}>
@@ -384,7 +384,7 @@ function CheckoutSheet({
               <div>
                 <p className="text-sm font-medium text-neutral-900">{line.menuItem.name}</p>
                 <p className="text-xs text-neutral-500">
-                  {line.quantity}
+                  {round2(line.quantity)}
                   {line.menuItem.priceType === 'per_kg' ? ' kg' : ' ×'} {formatInr(line.menuItem.price)}
                 </p>
               </div>

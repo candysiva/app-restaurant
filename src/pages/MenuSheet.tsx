@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { CategoryApi, MenuApi, sortCategories } from '../lib/data'
 import type { CategoryItem, MenuItem, PriceType } from '../lib/types'
-import { formatInr } from '../lib/format'
+import { formatInr, round2 } from '../lib/format'
 import { PlusIcon, CloseIcon, TrashIcon } from '../components/icons'
 import { ApiError } from '../lib/api'
 import { useCachedFetch } from '../lib/cache'
@@ -182,7 +182,7 @@ function MenuItemSheet({
   const confirmDialog = useConfirm()
 
   function addPreset() {
-    const amount = Number(presetInput)
+    const amount = round2(Number(presetInput))
     if (!Number.isFinite(amount) || amount <= 0) return
     if (!presetAmounts.includes(amount)) {
       setPresetAmounts((prev) => [...prev, amount].sort((a, b) => a - b))
@@ -197,7 +197,7 @@ function MenuItemSheet({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
-    const parsedPrice = Number(price)
+    const parsedPrice = round2(Number(price))
     const category = categories.find((c) => c.id === categoryId)
     if (!name.trim() || !Number.isFinite(parsedPrice) || parsedPrice <= 0 || !category) {
       setError('Enter a name, category, and a valid price')

@@ -49,7 +49,7 @@ Menu categories (Tiffin, Batter, ...) are no longer fixed — owners manage them
 
 ## Per-kg items: billing by amount
 
-Per-kg items (batter/maavu) sell in fixed, per-item ₹/kg prices set in More → Menu. Since customers often ask for a rounded rupee amount rather than an exact weight, each per-kg menu item can also have a handful of **quick amounts** (e.g. ₹20, ₹50, ₹100) set from its edit screen — Billing then shows those as tap buttons plus a custom-amount field, and the kg is calculated automatically from the item's price (rounded to the nearest gram). Precise weight entry ("By weight (kg)") is still available as the other tab in the same sheet for anything that doesn't fit a round amount.
+Per-kg items (batter/maavu) sell in fixed, per-item ₹/kg prices set in More → Menu. Since customers often ask for a rounded rupee amount rather than an exact weight, each per-kg menu item can also have a handful of **quick amounts** (e.g. ₹20, ₹50, ₹100) set from its edit screen — Billing then shows those as tap buttons plus a custom-amount field, and the kg is calculated automatically from the item's price (rounded to 2 decimal places, like every quantity and cost figure in the app). Precise weight entry ("By weight (kg)") is still available as the other tab in the same sheet for anything that doesn't fit a round amount.
 
 ## Vendor purchases &amp; stock
 

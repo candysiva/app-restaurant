@@ -1,18 +1,24 @@
+/** Rounds to 2 decimal places, correcting the tiny binary floating-point error that
+ * arithmetic like 0.1 + 0.2 or repeated stock additions can leave behind. */
+export function round2(n: number): number {
+  return Math.round((n + Number.EPSILON) * 100) / 100
+}
+
 export function formatInr(amount: number): string {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
     maximumFractionDigits: 2,
     minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
-  }).format(amount)
+  }).format(round2(amount))
 }
 
 export function formatQty(qty: number, priceType: 'fixed' | 'per_kg'): string {
-  return priceType === 'per_kg' ? `${qty} kg` : `${qty}`
+  return priceType === 'per_kg' ? `${round2(qty)} kg` : `${round2(qty)}`
 }
 
 export function formatQtyWithUnit(qty: number, unit: string): string {
-  return `${qty} ${unit}`
+  return `${round2(qty)} ${unit}`
 }
 
 export function todayIso(): string {

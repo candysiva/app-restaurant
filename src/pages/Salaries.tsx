@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { EmployeeApi, SalaryPaymentApi } from '../lib/data'
 import type { Employee, PaymentMethod, SalaryPayment } from '../lib/types'
-import { dateIso, formatDateLabel, formatInr, todayIso } from '../lib/format'
+import { dateIso, formatDateLabel, formatInr, round2, todayIso } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { CloseIcon, PlusIcon } from '../components/icons'
 import { useCachedFetch } from '../lib/cache'
@@ -155,7 +155,7 @@ function SalaryPaymentSheet({
     if (emp) setAmount(String(emp.payRate))
   }
 
-  const parsedAmount = Number(amount)
+  const parsedAmount = round2(Number(amount))
   const valid = employee && amount.trim() !== '' && Number.isFinite(parsedAmount) && parsedAmount > 0 && periodStart && periodEnd
 
   async function handleSubmit() {
