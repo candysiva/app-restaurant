@@ -31,7 +31,7 @@ export function Stock() {
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
-      <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white px-4 py-3">
+      <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
         <h1 className="text-lg font-bold text-neutral-900">Stock</h1>
       </header>
 

@@ -66,7 +66,7 @@ export function Billing() {
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
-      <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white px-4 py-3">
+      <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
         <h1 className="text-lg font-bold text-neutral-900">New Bill</h1>
         <div className="no-scrollbar mt-2 flex gap-1.5 overflow-x-auto pb-1">
           <button

@@ -46,7 +46,7 @@ export function OtherExpenses() {
 
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
-      <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white px-4 py-3">
+      <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
         <div className="flex items-center justify-between gap-2">
           <h1 className="text-lg font-bold text-neutral-900">Other expenses</h1>
           <button
