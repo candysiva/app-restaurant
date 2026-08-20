@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { OrderApi, OrderItemApi } from '../lib/data'
-import type { Order, OrderItem } from '../lib/types'
+import { OrderApi, OrderItemApi, OtherExpenseApi, SalaryPaymentApi, VendorPaymentApi } from '../lib/data'
+import type { Order, OrderItem, OtherExpense, SalaryPayment, VendorPayment } from '../lib/types'
 import { dateIso, formatDateLabel, formatInr, todayIso } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { useCachedFetch } from '../lib/cache'
@@ -40,18 +40,27 @@ function weekdayOf(iso: string): number {
 
 const EMPTY_ORDERS: Order[] = []
 const EMPTY_LINE_ITEMS: OrderItem[] = []
+const EMPTY_VENDOR_PAYMENTS: VendorPayment[] = []
+const EMPTY_SALARY_PAYMENTS: SalaryPayment[] = []
+const EMPTY_OTHER_EXPENSES: OtherExpense[] = []
 
 interface DashboardData {
   orders: Order[]
   lineItems: OrderItem[]
+  vendorPayments: VendorPayment[]
+  salaryPayments: SalaryPayment[]
+  otherExpenses: OtherExpense[]
 }
 
 async function fetchDashboardData(from: string, to: string): Promise<DashboardData> {
-  const [orders, lineItems] = await Promise.all([
+  const [orders, lineItems, vendorPayments, salaryPayments, otherExpenses] = await Promise.all([
     OrderApi.listInRange(from, to),
     OrderItemApi.listInRange(from, to),
+    VendorPaymentApi.listInRange(from, to),
+    SalaryPaymentApi.listInRange(from, to),
+    OtherExpenseApi.listInRange(from, to),
   ])
-  return { orders, lineItems }
+  return { orders, lineItems, vendorPayments, salaryPayments, otherExpenses }
 }
 
 const BRAND = '#b91c1c'
@@ -117,6 +126,9 @@ export function Dashboard() {
 
   const orders = data?.orders ?? EMPTY_ORDERS
   const lineItems = data?.lineItems ?? EMPTY_LINE_ITEMS
+  const vendorPayments = data?.vendorPayments ?? EMPTY_VENDOR_PAYMENTS
+  const salaryPayments = data?.salaryPayments ?? EMPTY_SALARY_PAYMENTS
+  const otherExpenses = data?.otherExpenses ?? EMPTY_OTHER_EXPENSES
 
   const completedOrders = useMemo(() => orders.filter((o) => o.status === 'completed'), [orders])
   const cancelledIds = useMemo(
@@ -131,6 +143,15 @@ export function Dashboard() {
   const totalSales = completedOrders.reduce((sum, o) => sum + o.total, 0)
   const billCount = completedOrders.length
   const avgBill = billCount > 0 ? totalSales / billCount : 0
+
+  // Cash-basis: what was actually paid out in this period (vendor payments + salary
+  // payments + other expenses), not accrued purchase totals — mirrors how Sales already
+  // counts an order when it's paid, not when the food is made.
+  const totalExpenses =
+    vendorPayments.reduce((sum, p) => sum + p.amount, 0) +
+    salaryPayments.reduce((sum, p) => sum + p.amount, 0) +
+    otherExpenses.reduce((sum, e) => sum + e.amount, 0)
+  const netProfit = totalSales - totalExpenses
 
   const trendData = useMemo(() => {
     const byDay = new Map<string, number>()
@@ -234,6 +255,14 @@ export function Dashboard() {
             <StatTile label="Sales" value={formatInr(totalSales)} />
             <StatTile label="Bills" value={String(billCount)} />
             <StatTile label="Avg / bill" value={formatInr(avgBill)} />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <StatTile label="Expenses" value={formatInr(totalExpenses)} />
+            <StatTile
+              label="Net profit"
+              value={formatInr(netProfit)}
+              valueClassName={netProfit >= 0 ? 'text-green-600' : 'text-red-600'}
+            />
           </div>
 
           {period !== 'today' && (
@@ -443,11 +472,11 @@ function TrendChart({
   )
 }
 
-function StatTile({ label, value }: { label: string; value: string }) {
+function StatTile({ label, value, valueClassName }: { label: string; value: string; valueClassName?: string }) {
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-3">
       <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-400">{label}</p>
-      <p className="mt-1 text-base font-bold text-neutral-900">{value}</p>
+      <p className={`mt-1 text-base font-bold ${valueClassName ?? 'text-neutral-900'}`}>{value}</p>
     </div>
   )
 }
