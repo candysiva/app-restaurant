@@ -46,7 +46,7 @@ export function Billing() {
   )
 
   const total = cartLines.reduce((sum, l) => sum + lineTotalOf(l), 0)
-  const itemCount = cartLines.reduce((sum, l) => sum + l.quantity, 0)
+  const itemCount = round2(cartLines.reduce((sum, l) => sum + l.quantity, 0))
 
   function addFixed(item: MenuItem) {
     setCart((prev) => ({ ...prev, [item.id]: (prev[item.id] ?? 0) + 1 }))
