@@ -6,7 +6,7 @@ import { useAuth } from '../lib/auth'
 const tabs = [
   { to: '/', label: 'Bill', Icon: BillIcon, end: true, ownerOnly: false },
   { to: '/orders', label: 'Orders', Icon: OrdersIcon, end: false, ownerOnly: false },
-  { to: '/stock', label: 'Stock', Icon: StockIcon, end: false, ownerOnly: true },
+  { to: '/stock', label: 'Stock', Icon: StockIcon, end: false, ownerOnly: false },
   { to: '/dashboard', label: 'Dashboard', Icon: DashboardIcon, end: false, ownerOnly: true },
   { to: '/settings', label: 'More', Icon: MoreIcon, end: false, ownerOnly: false },
 ]

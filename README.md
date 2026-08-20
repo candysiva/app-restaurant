@@ -10,7 +10,7 @@ The bottom nav is deliberately kept to five items — **Bill, Orders, Stock, Das
 
 - **Bill** — tap-to-add for fixed items; for per-kg items, either weigh directly (kg → price) or tap a rupee amount (a preset or a custom one) and the kg is calculated for you — one-tap checkout with payment method.
 - **Orders** — today / last 7 days / recent history, line-item detail, cancel a bill.
-- **Stock** (owner-only) — the day-to-day stock screen: materials at or below their low-stock threshold surface in a "Needs reorder" section; tap any material to log usage, wastage, or a correction (see below).
+- **Stock** — the day-to-day stock screen, open to owners and staff: materials at or below their low-stock threshold surface in a "Needs reorder" section; tap any material to log usage, wastage, or a correction (see below).
 - **Dashboard** (owner-only) — sales totals and item-wise ranking over today / week / 1-12 months / a custom number of months; trend chart by calendar date or by weekday (e.g. every Saturday's sales across a quarter). Tap a bar in the trend chart to drill the item-wise list below into just that date (or, in "by weekday" view, every occurrence of that weekday in the period) — tap it again, or hit Clear, to go back to the full period.
 - **More** — account info, and (owner-only) menu, categories, staff logins, vendors, purchases, materials & stock, sign out. Vendor payments/dues, employee salaries, and other expenses (rent, electricity, ...) are planned as follow-up features; a Sales-vs-Expenses net profit view on the Dashboard comes once all of those exist.
 
@@ -35,7 +35,7 @@ The backend project starts with no users. On first launch, use the **First-time 
 
 ## Staff logins and roles
 
-The first-time-setup account is the **owner**. From **More → Staff logins** (owners only), the owner can add teammates directly — no separate signup needed — edit their name/role/password, or remove their login. Everyone shares the same shop data (menu, orders), but **Stock, Dashboard, and the rest of Shop setup under More are owner-only**: staff logins don't see those nav items or More rows, and are redirected away from Stock/Dashboard/Purchases if they hit the URL directly.
+The first-time-setup account is the **owner**. From **More → Staff logins** (owners only), the owner can add teammates directly — no separate signup needed — edit their name/role/password, or remove their login. Everyone shares the same shop data (menu, orders), and staff logins can also check and log stock via the **Stock** tab. But **Dashboard and the rest of Shop setup under More (Menu, Categories, Staff logins, Vendors, Purchases, Materials & stock) are owner-only**: staff logins don't see those nav items or More rows, and are redirected away from Dashboard/Purchases if they hit the URL directly.
 
 This role check is enforced in the app's UI/routing, not by the backend — every signed-in user's JWT can still reach the same data API. That's an acceptable tradeoff for a single small shop where everyone is trusted staff, but don't treat it as a security boundary against an untrusted user with API access.
 

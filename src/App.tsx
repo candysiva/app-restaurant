@@ -52,7 +52,7 @@ export default function App() {
             <Route
               path="/stock"
               element={
-                <ProtectedRoute ownerOnly>
+                <ProtectedRoute>
                   <AppShell>
                     <Stock />
                   </AppShell>
