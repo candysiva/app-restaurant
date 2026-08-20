@@ -9,6 +9,7 @@ import { Orders } from './pages/Orders'
 import { Stock } from './pages/Stock'
 import { Purchases } from './pages/Purchases'
 import { Salaries } from './pages/Salaries'
+import { OtherExpenses } from './pages/OtherExpenses'
 import { Dashboard } from './pages/Dashboard'
 import { Settings } from './pages/Settings'
 
@@ -78,6 +79,16 @@ export default function App() {
                 <ProtectedRoute ownerOnly>
                   <AppShell>
                     <Salaries />
+                  </AppShell>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/other-expenses"
+              element={
+                <ProtectedRoute ownerOnly>
+                  <AppShell>
+                    <OtherExpenses />
                   </AppShell>
                 </ProtectedRoute>
               }

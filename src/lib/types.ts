@@ -171,3 +171,23 @@ export interface SalaryPayment {
   paymentMethod: PaymentMethod
   notes?: string
 }
+
+export type ExpenseCategory =
+  | 'rent'
+  | 'electricity'
+  | 'gas'
+  | 'water'
+  | 'repairs'
+  | 'transport'
+  | 'license_tax'
+  | 'misc'
+
+export interface OtherExpense {
+  id: string
+  category: ExpenseCategory
+  amount: number
+  expenseDate: string
+  paymentMethod: PaymentMethod
+  payee?: string
+  notes?: string
+}

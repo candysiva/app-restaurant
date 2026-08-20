@@ -12,7 +12,7 @@ The bottom nav is deliberately kept to five items — **Bill, Orders, Stock, Das
 - **Orders** — today / last 7 days / recent history, line-item detail, cancel a bill.
 - **Stock** — the day-to-day stock screen, open to owners and staff: materials at or below their low-stock threshold surface in a "Needs reorder" section; tap any material to log usage, wastage, or a correction (see below).
 - **Dashboard** (owner-only) — sales totals and item-wise ranking over today / week / 1-12 months / a custom number of months; trend chart by calendar date or by weekday (e.g. every Saturday's sales across a quarter). Tap a bar in the trend chart to drill the item-wise list below into just that date (or, in "by weekday" view, every occurrence of that weekday in the period) — tap it again, or hit Clear, to go back to the full period.
-- **More** — account info, and (owner-only) menu, categories, staff logins, vendors, purchases (with vendor payments/dues), employees, salaries, materials & stock, sign out. Other expenses (rent, electricity, ...) are planned as a follow-up feature; a Sales-vs-Expenses net profit view on the Dashboard comes once that exists too.
+- **More** — account info, and (owner-only) menu, categories, staff logins, vendors, purchases (with vendor payments/dues), employees, salaries, other expenses, materials & stock, sign out. A Sales-vs-Expenses net profit view on the Dashboard is planned as a follow-up, now that all the expense-side data exists.
 
 ## Tech
 
@@ -66,6 +66,10 @@ A purchase tracks **amount paid**, **balance due**, and a **payment status** (Un
 Owners manage **Employees** (master data — name, phone, role, pay frequency, pay rate) from **More → Employees**, the same add/edit/deactivate pattern as Vendors. Pay frequency and pay rate are informational only — a reminder of what an employee is normally owed — nothing is auto-calculated or auto-paid from them.
 
 **More → Salaries** is a manual payment log: pick an employee (their pay rate pre-fills the amount, editable), set the period the payment covers (e.g. "week of Aug 11 – Aug 17"), a payment date and method, and save. There's no attendance or time-clock tracking — recording what was actually paid, for whatever period you say it covers, is the whole feature. Today / last 7 days / all-time tabs match the Purchases screen.
+
+## Other expenses
+
+**More → Other expenses** logs anything that isn't a vendor purchase or a salary — rent, electricity, gas, water, repairs, transport, license/tax, or miscellaneous. Each entry has a category, amount, date, payment method, and an optional payee (e.g. "TNEB") and notes. Same Today / last 7 days / all-time tabs as Purchases and Salaries.
 
 ## Order numbers
 

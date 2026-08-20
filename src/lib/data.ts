@@ -3,10 +3,12 @@ import { todayIso } from './format'
 import type {
   CategoryItem,
   Employee,
+  ExpenseCategory,
   Material,
   MenuItem,
   Order,
   OrderItem,
+  OtherExpense,
   PaymentMethod,
   Purchase,
   PurchaseItem,
@@ -469,4 +471,19 @@ export const SalaryPaymentApi = {
     paymentMethod: PaymentMethod
     notes?: string
   }) => api.post<SalaryPayment>('/salary_payments', data),
+}
+
+export const OtherExpenseApi = {
+  listInRange: (fromDate: string, toDate: string) =>
+    fetchAll<OtherExpense>('/other_expenses', { 'expenseDate[gte]': fromDate, 'expenseDate[lte]': toDate, sort: '-expenseDate' }),
+  create: (data: {
+    category: ExpenseCategory
+    amount: number
+    expenseDate: string
+    paymentMethod: PaymentMethod
+    payee?: string
+    notes?: string
+  }) => api.post<OtherExpense>('/other_expenses', data),
+  update: (id: string, data: Partial<Omit<OtherExpense, 'id'>>) => api.patch<OtherExpense>(`/other_expenses/${id}`, data),
+  remove: (id: string) => api.del(`/other_expenses/${id}`),
 }

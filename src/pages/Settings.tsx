@@ -11,6 +11,7 @@ import {
   PurchaseIcon,
   TruckIcon,
   UsersIcon,
+  WalletIcon,
 } from '../components/icons'
 import { StaffSheet } from './StaffSheet'
 import { CategoriesSheet } from './CategoriesSheet'
@@ -126,6 +127,11 @@ export function Settings() {
               <Link to="/salaries" className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
                 <PurchaseIcon className="h-5 w-5 text-neutral-400" />
                 <span className="flex-1 text-sm font-medium text-neutral-900">Salaries</span>
+                <span className="text-neutral-300">›</span>
+              </Link>
+              <Link to="/other-expenses" className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
+                <WalletIcon className="h-5 w-5 text-neutral-400" />
+                <span className="flex-1 text-sm font-medium text-neutral-900">Other expenses</span>
                 <span className="text-neutral-300">›</span>
               </Link>
             </div>
