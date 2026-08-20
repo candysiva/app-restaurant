@@ -139,7 +139,12 @@ export function Purchases() {
                 )}
               </p>
             </div>
-            <span className="font-semibold text-neutral-900">{formatInr(p.total)}</span>
+            <div className="flex flex-col items-end">
+              <span className="font-semibold text-neutral-900">{formatInr(p.total)}</span>
+              {p.balanceDue > 0 && (
+                <span className="text-xs font-bold text-red-600">Due {formatInr(p.balanceDue)}</span>
+              )}
+            </div>
           </button>
         ))}
       </div>
