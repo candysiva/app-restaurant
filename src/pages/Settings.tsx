@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { isOwner } from '../lib/types'
-import { AlertTriangleIcon, LogoutIcon, MenuBookIcon, PackageIcon, TruckIcon, UsersIcon } from '../components/icons'
+import { AlertTriangleIcon, LogoutIcon, MenuBookIcon, PackageIcon, PurchaseIcon, TruckIcon, UsersIcon } from '../components/icons'
 import { StaffSheet } from './StaffSheet'
 import { CategoriesSheet } from './CategoriesSheet'
 import { MenuSheet } from './MenuSheet'
@@ -29,7 +30,7 @@ export function Settings() {
   return (
     <div className="flex min-h-full flex-col bg-neutral-50">
       <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white px-4 py-3">
-        <h1 className="text-lg font-bold text-neutral-900">Settings</h1>
+        <h1 className="text-lg font-bold text-neutral-900">More</h1>
       </header>
 
       <div className="flex-1 space-y-5 p-4">
@@ -84,6 +85,11 @@ export function Settings() {
                 <span className="flex-1 text-sm font-medium text-neutral-900">Vendors</span>
                 <span className="text-neutral-300">›</span>
               </button>
+              <Link to="/purchases" className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
+                <PurchaseIcon className="h-5 w-5 text-neutral-400" />
+                <span className="flex-1 text-sm font-medium text-neutral-900">Purchases</span>
+                <span className="text-neutral-300">›</span>
+              </Link>
               <button
                 onClick={() => setShowMaterials(true)}
                 className="flex w-full items-center gap-3 px-4 py-3.5 text-left"

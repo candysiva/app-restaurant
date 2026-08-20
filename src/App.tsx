@@ -6,7 +6,8 @@ import { BottomNav } from './components/BottomNav'
 import { Login } from './pages/Login'
 import { Billing } from './pages/Billing'
 import { Orders } from './pages/Orders'
-import { Expenses } from './pages/Expenses'
+import { Stock } from './pages/Stock'
+import { Purchases } from './pages/Purchases'
 import { Dashboard } from './pages/Dashboard'
 import { Settings } from './pages/Settings'
 
@@ -36,7 +37,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            {/* Menu management moved into Settings — keep old bookmarks/links working. */}
+            {/* Menu management moved into More — keep old bookmarks/links working. */}
             <Route path="/menu" element={<Navigate to="/settings" replace />} />
             <Route
               path="/orders"
@@ -49,15 +50,27 @@ export default function App() {
               }
             />
             <Route
-              path="/expenses"
+              path="/stock"
               element={
                 <ProtectedRoute ownerOnly>
                   <AppShell>
-                    <Expenses />
+                    <Stock />
                   </AppShell>
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/purchases"
+              element={
+                <ProtectedRoute ownerOnly>
+                  <AppShell>
+                    <Purchases />
+                  </AppShell>
+                </ProtectedRoute>
+              }
+            />
+            {/* Expenses tab was split into Stock (its own nav tab) and Purchases (moved into More). */}
+            <Route path="/expenses" element={<Navigate to="/stock" replace />} />
             <Route
               path="/dashboard"
               element={

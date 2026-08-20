@@ -72,7 +72,7 @@ export function MenuSheet({ onClose }: { onClose: () => void }) {
 
           {noCategories && (
             <p className="my-3 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">
-              Add a category first — Settings → Categories — before adding menu items.
+              Add a category first — More → Categories — before adding menu items.
             </p>
           )}
 

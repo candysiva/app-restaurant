@@ -1,14 +1,14 @@
 import { NavLink } from 'react-router-dom'
-import { BillIcon, OrdersIcon, ExpensesIcon, DashboardIcon, SettingsIcon } from './icons'
+import { BillIcon, OrdersIcon, StockIcon, DashboardIcon, MoreIcon } from './icons'
 import { isOwner } from '../lib/types'
 import { useAuth } from '../lib/auth'
 
 const tabs = [
   { to: '/', label: 'Bill', Icon: BillIcon, end: true, ownerOnly: false },
   { to: '/orders', label: 'Orders', Icon: OrdersIcon, end: false, ownerOnly: false },
-  { to: '/expenses', label: 'Expenses', Icon: ExpensesIcon, end: false, ownerOnly: true },
+  { to: '/stock', label: 'Stock', Icon: StockIcon, end: false, ownerOnly: true },
   { to: '/dashboard', label: 'Dashboard', Icon: DashboardIcon, end: false, ownerOnly: true },
-  { to: '/settings', label: 'Settings', Icon: SettingsIcon, end: false, ownerOnly: false },
+  { to: '/settings', label: 'More', Icon: MoreIcon, end: false, ownerOnly: false },
 ]
 
 export function BottomNav() {
