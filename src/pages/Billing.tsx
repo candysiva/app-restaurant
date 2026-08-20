@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CategoryApi, MenuApi, sortCategories, submitOrder, type CartLine } from '../lib/data'
+import { CategoryApi, MenuApi, lineTotalOf, sortCategories, submitOrder, type CartLine } from '../lib/data'
 import type { MenuItem, PaymentMethod } from '../lib/types'
 import { formatInr, round2 } from '../lib/format'
 import { ApiError } from '../lib/api'
@@ -13,6 +13,10 @@ export function Billing() {
   const { data: allCategories } = useCachedFetch('categories', CategoryApi.list)
   const [tab, setTab] = useState<string>(ALL_TAB)
   const [cart, setCart] = useState<Record<string, number>>({})
+  // Explicit ₹ override for per-kg lines billed "by amount" — the kg stored in `cart` is
+  // necessarily rounded, so multiplying it back by price wouldn't reproduce the exact
+  // amount the customer picked/typed (e.g. ₹30 at ₹45/kg → 0.67kg → 0.67×45 = ₹30.15).
+  const [cartAmounts, setCartAmounts] = useState<Record<string, number>>({})
   const [weighing, setWeighing] = useState<MenuItem | null>(null)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [receipt, setReceipt] = useState<{ orderNumber: number; total: number } | null>(null)
@@ -36,20 +40,29 @@ export function Billing() {
     () =>
       Object.entries(cart)
         .filter(([, qty]) => qty > 0)
-        .map(([id, quantity]) => ({ menuItem: itemsById.get(id)!, quantity }))
+        .map(([id, quantity]) => ({ menuItem: itemsById.get(id)!, quantity, amount: cartAmounts[id] }))
         .filter((l) => l.menuItem),
-    [cart, itemsById],
+    [cart, cartAmounts, itemsById],
   )
 
-  const total = cartLines.reduce((sum, l) => sum + l.menuItem.price * l.quantity, 0)
+  const total = cartLines.reduce((sum, l) => sum + lineTotalOf(l), 0)
   const itemCount = cartLines.reduce((sum, l) => sum + l.quantity, 0)
 
   function addFixed(item: MenuItem) {
     setCart((prev) => ({ ...prev, [item.id]: (prev[item.id] ?? 0) + 1 }))
   }
 
-  function setQty(itemId: string, qty: number) {
+  function setQty(itemId: string, qty: number, amount?: number) {
     setCart((prev) => ({ ...prev, [itemId]: Math.max(0, qty) }))
+    setCartAmounts((prev) => {
+      if (amount === undefined) {
+        if (!(itemId in prev)) return prev
+        const next = { ...prev }
+        delete next[itemId]
+        return next
+      }
+      return { ...prev, [itemId]: amount }
+    })
   }
 
   function handleTileTap(item: MenuItem) {
@@ -62,6 +75,7 @@ export function Billing() {
 
   function resetCart() {
     setCart({})
+    setCartAmounts({})
   }
 
   return (
@@ -178,8 +192,8 @@ export function Billing() {
           item={weighing}
           initialKg={cart[weighing.id]}
           onClose={() => setWeighing(null)}
-          onConfirm={(kg) => {
-            setQty(weighing.id, kg)
+          onConfirm={(kg, amount) => {
+            setQty(weighing.id, kg, amount)
             setWeighing(null)
           }}
         />
@@ -230,7 +244,7 @@ function WeighSheet({
   item: MenuItem
   initialKg?: number
   onClose: () => void
-  onConfirm: (kg: number) => void
+  onConfirm: (kg: number, amount?: number) => void
 }) {
   const hasPresets = (item.presetAmounts?.length ?? 0) > 0
   const [mode, setMode] = useState<'amount' | 'weight'>(hasPresets ? 'amount' : 'weight')
@@ -326,7 +340,7 @@ function WeighSheet({
 
         <button
           disabled={!valid}
-          onClick={() => onConfirm(resultKg)}
+          onClick={() => onConfirm(resultKg, mode === 'amount' ? round2(parsedAmount) : undefined)}
           className="mt-4 w-full rounded-xl bg-brand-700 py-3 font-semibold text-white active:bg-brand-800 disabled:opacity-40"
         >
           Add to bill
@@ -390,7 +404,7 @@ function CheckoutSheet({
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm font-semibold text-neutral-900">
-                  {formatInr(line.menuItem.price * line.quantity)}
+                  {formatInr(lineTotalOf(line))}
                 </span>
                 <button
                   onClick={() => onRemoveLine(line.menuItem.id)}

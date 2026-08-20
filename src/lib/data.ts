@@ -159,6 +159,16 @@ async function nextOrderNumber(orderDate: string): Promise<number> {
 export interface CartLine {
   menuItem: MenuItem
   quantity: number
+  /** For per-kg items billed "by amount": the exact rupee amount the customer picked/typed,
+   * which is what they're actually charged. quantity is still the computed kg (for stock
+   * records), but multiplying it back by price won't exactly reproduce this amount — kg is
+   * necessarily rounded, so this field is the source of truth for what's owed, not a
+   * derived value. */
+  amount?: number
+}
+
+export function lineTotalOf(line: CartLine): number {
+  return line.amount ?? round2(line.menuItem.price * line.quantity)
 }
 
 export async function submitOrder(
@@ -168,7 +178,7 @@ export async function submitOrder(
 ): Promise<Order> {
   const now = new Date()
   const orderDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  const total = round2(cart.reduce((sum, line) => sum + line.menuItem.price * line.quantity, 0))
+  const total = round2(cart.reduce((sum, line) => sum + lineTotalOf(line), 0))
   const itemCount = round2(cart.reduce((sum, line) => sum + line.quantity, 0))
 
   const order = await OrderApi.create({
@@ -192,7 +202,7 @@ export async function submitOrder(
         priceType: line.menuItem.priceType,
         unitPrice: line.menuItem.price,
         quantity: round2(line.quantity),
-        lineTotal: round2(line.menuItem.price * line.quantity),
+        lineTotal: lineTotalOf(line),
         orderDate,
       }),
     ),
