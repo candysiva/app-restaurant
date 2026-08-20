@@ -260,7 +260,7 @@ function PurchaseSheet({
   }
   if (materials !== null && activeMaterials.length === 0) {
     return (
-      <Blocked onClose={onClose} message="Add a material first — More → Materials & stock — before recording a purchase." />
+      <Blocked onClose={onClose} message="Add a material first — More → Materials — before recording a purchase." />
     )
   }
 

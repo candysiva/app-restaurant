@@ -12,7 +12,7 @@ The bottom nav is deliberately kept to five items — **Bill, Orders, Stock, Das
 - **Orders** — today / last 7 days / recent history, line-item detail, cancel a bill.
 - **Stock** — the day-to-day stock screen, open to owners and staff: materials at or below their low-stock threshold surface in a "Needs reorder" section; tap any material to log usage, wastage, or a correction (see below).
 - **Dashboard** (owner-only) — sales totals, **expenses, and net profit** for the period, plus item-wise sales ranking, over today / week / 1-12 months / a custom number of months; trend chart by calendar date or by weekday (e.g. every Saturday's sales across a quarter). Tap a bar in the trend chart to drill the item-wise list below into just that date (or, in "by weekday" view, every occurrence of that weekday in the period) — tap it again, or hit Clear, to go back to the full period.
-- **More** — account info, and (owner-only) menu, categories, staff logins, vendors, purchases (with vendor payments/dues), employees, salaries, other expenses, materials & stock, sign out.
+- **More** — account info; (owner-only) **Shop setup** — master records: menu, categories, staff logins, vendors, employees, materials; **Expenses** — day-to-day logging: purchases (with vendor payments/dues), salaries, other expenses; and sign out.
 
 ## Tech
 
@@ -35,7 +35,7 @@ The backend project starts with no users. On first launch, use the **First-time 
 
 ## Staff logins and roles
 
-The first-time-setup account is the **owner**. From **More → Staff logins** (owners only), the owner can add teammates directly — no separate signup needed — edit their name/role/password, or remove their login. Everyone shares the same shop data (menu, orders), and staff logins can also check and log stock via the **Stock** tab. But **Dashboard and the rest of Shop setup under More (Menu, Categories, Staff logins, Vendors, Purchases, Materials & stock) are owner-only**: staff logins don't see those nav items or More rows, and are redirected away from Dashboard/Purchases if they hit the URL directly.
+The first-time-setup account is the **owner**. From **More → Staff logins** (owners only), the owner can add teammates directly — no separate signup needed — edit their name/role/password, or remove their login. Everyone shares the same shop data (menu, orders), and staff logins can also check and log stock via the **Stock** tab. But **Dashboard and the rest of More (Shop setup: Menu, Categories, Staff logins, Vendors, Employees, Materials; and Expenses: Purchases, Salaries, Other expenses) are owner-only**: staff logins don't see those nav items or More rows, and are redirected away if they hit the URLs directly.
 
 This role check is enforced in the app's UI/routing, not by the backend — every signed-in user's JWT can still reach the same data API. That's an acceptable tradeoff for a single small shop where everyone is trusted staff, but don't treat it as a security boundary against an untrusted user with API access.
 
@@ -53,9 +53,9 @@ Per-kg items (batter/maavu) sell in fixed, per-item ₹/kg prices set in More �
 
 ## Vendor purchases &amp; stock
 
-Owners manage **Vendors** and **Materials &amp; stock** (master data — name, unit, low-stock threshold) from **More** (add/edit/deactivate, same pattern as Categories). A material has a unit (kg, litre, piece, ...), a running **current stock** quantity, and a **low-stock threshold**.
+Owners manage **Vendors** and **Materials** (master data — name, unit, low-stock threshold) from **More → Shop setup** (add/edit/deactivate, same pattern as Categories). A material has a unit (kg, litre, piece, ...), a running **current stock** quantity, and a **low-stock threshold**.
 
-Day-to-day stock work happens in the **Stock** nav tab, not More: materials at or below their threshold surface in a "Needs reorder" section, and tapping any material opens a **log a stock change** form (usage, wastage, or a manual correction) — stock isn't tied to sales automatically (that would need a recipe/ingredients mapping for every menu item, a bigger feature not built here), so log what goes out as you use it. More → Materials & stock stays focused on editing a material's name/unit/threshold; it shows current stock read-only and points you to the Stock tab to change it.
+Day-to-day stock work happens in the **Stock** nav tab, not More: materials at or below their threshold surface in a "Needs reorder" section, and tapping any material opens a **log a stock change** form (usage, wastage, or a manual correction) — stock isn't tied to sales automatically (that would need a recipe/ingredients mapping for every menu item, a bigger feature not built here), so log what goes out as you use it. More → Materials stays focused on editing a material's name/unit/threshold; it shows current stock read-only and points you to the Stock tab to change it.
 
 **More → Purchases** records a vendor bill with one or more material lines, each with its own quantity and price — prices aren't fixed and can differ purchase to purchase, even for the same material. Saving a purchase automatically increases each material's stock and writes an audit entry (visible per-material history is planned). Optionally pay the vendor something on the spot ("Pay now") right when you record the purchase.
 

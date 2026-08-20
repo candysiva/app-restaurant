@@ -57,7 +57,7 @@ export function MaterialsSheet({ onClose }: { onClose: () => void }) {
       >
         <div className="flex items-center justify-between border-b border-neutral-100 p-5 pb-3">
           <div>
-            <h2 className="text-base font-bold text-neutral-900">Materials &amp; stock</h2>
+            <h2 className="text-base font-bold text-neutral-900">Materials</h2>
             {lowStockCount > 0 && (
               <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-red-600">
                 <AlertTriangleIcon className="h-3.5 w-3.5" />

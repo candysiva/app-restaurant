@@ -42,7 +42,7 @@ export function Stock() {
         )}
         {!loading && materials.length === 0 && !error && (
           <p className="p-8 text-center text-sm text-neutral-400">
-            No materials yet — add one from More → Materials &amp; stock.
+            No materials yet — add one from More → Materials.
           </p>
         )}
 
