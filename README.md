@@ -12,7 +12,7 @@ The bottom nav is deliberately kept to five items — **Bill, Orders, Stock, Das
 - **Orders** — today / last 7 days / recent history, line-item detail, cancel a bill.
 - **Stock** — the day-to-day stock screen, open to owners and staff: materials at or below their low-stock threshold surface in a "Needs reorder" section; tap any material to log usage, wastage, or a correction (see below).
 - **Dashboard** (owner-only) — sales totals, **expenses, and net profit** for the period, plus item-wise sales ranking, over today / week / 1-12 months / a custom number of months; trend chart by calendar date or by weekday (e.g. every Saturday's sales across a quarter). Tap a bar in the trend chart to drill the item-wise list below into just that date (or, in "by weekday" view, every occurrence of that weekday in the period) — tap it again, or hit Clear, to go back to the full period.
-- **More** — account info; (owner-only) **Shop setup** — master records: menu, categories, staff logins, vendors, employees, materials; **Expenses** — day-to-day logging: purchases (with vendor payments/dues), salaries, other expenses; and sign out.
+- **More** — account info; (owner-only) **Expenses** — day-to-day logging: purchases (with vendor payments/dues), salaries, other expenses; **Shop setup** — master records: menu, categories, staff logins, vendors, employees, materials; and sign out.
 
 ## Tech
 

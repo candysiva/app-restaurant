@@ -63,6 +63,29 @@ export function Settings() {
 
         {isOwner(user) && (
           <section>
+            <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-400">Expenses</h2>
+            <div className="divide-y divide-neutral-100 rounded-xl border border-neutral-200 bg-white">
+              <Link to="/purchases" className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
+                <PurchaseIcon className="h-5 w-5 text-neutral-400" />
+                <span className="flex-1 text-sm font-medium text-neutral-900">Purchases</span>
+                <span className="text-neutral-300">›</span>
+              </Link>
+              <Link to="/salaries" className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
+                <EmployeeIcon className="h-5 w-5 text-neutral-400" />
+                <span className="flex-1 text-sm font-medium text-neutral-900">Salaries</span>
+                <span className="text-neutral-300">›</span>
+              </Link>
+              <Link to="/other-expenses" className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
+                <WalletIcon className="h-5 w-5 text-neutral-400" />
+                <span className="flex-1 text-sm font-medium text-neutral-900">Other expenses</span>
+                <span className="text-neutral-300">›</span>
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {isOwner(user) && (
+          <section>
             <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-400">Shop setup</h2>
             <div className="divide-y divide-neutral-100 rounded-xl border border-neutral-200 bg-white">
               <button
@@ -119,29 +142,6 @@ export function Settings() {
                 )}
                 <span className="text-neutral-300">›</span>
               </button>
-            </div>
-          </section>
-        )}
-
-        {isOwner(user) && (
-          <section>
-            <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-400">Expenses</h2>
-            <div className="divide-y divide-neutral-100 rounded-xl border border-neutral-200 bg-white">
-              <Link to="/purchases" className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
-                <PurchaseIcon className="h-5 w-5 text-neutral-400" />
-                <span className="flex-1 text-sm font-medium text-neutral-900">Purchases</span>
-                <span className="text-neutral-300">›</span>
-              </Link>
-              <Link to="/salaries" className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
-                <EmployeeIcon className="h-5 w-5 text-neutral-400" />
-                <span className="flex-1 text-sm font-medium text-neutral-900">Salaries</span>
-                <span className="text-neutral-300">›</span>
-              </Link>
-              <Link to="/other-expenses" className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
-                <WalletIcon className="h-5 w-5 text-neutral-400" />
-                <span className="flex-1 text-sm font-medium text-neutral-900">Other expenses</span>
-                <span className="text-neutral-300">›</span>
-              </Link>
             </div>
           </section>
         )}
