@@ -16,6 +16,14 @@ import { CloseIcon, PlusIcon } from '../components/icons'
 import { useCachedFetch } from '../lib/cache'
 
 type RangeTab = 'today' | 'week' | 'all'
+type StatusFilter = 'all' | Purchase['paymentStatus']
+
+const STATUS_FILTER_LABEL: Record<StatusFilter, string> = {
+  all: 'All',
+  unpaid: 'Unpaid',
+  partial: 'Partially paid',
+  paid: 'Paid',
+}
 
 const EMPTY_PURCHASES: Purchase[] = []
 
@@ -29,6 +37,7 @@ async function fetchPurchases(range: RangeTab): Promise<Purchase[]> {
 
 export function Purchases() {
   const [range, setRange] = useState<RangeTab>('today')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const {
     data: rawPurchases,
     loading,
@@ -39,7 +48,11 @@ export function Purchases() {
   const [adding, setAdding] = useState(false)
   const [viewing, setViewing] = useState<Purchase | null>(null)
 
-  const purchases = rawPurchases ?? EMPTY_PURCHASES
+  const allPurchases = rawPurchases ?? EMPTY_PURCHASES
+  const purchases = useMemo(
+    () => (statusFilter === 'all' ? allPurchases : allPurchases.filter((p) => p.paymentStatus === statusFilter)),
+    [allPurchases, statusFilter],
+  )
   const error = fetchError ? (fetchError instanceof ApiError ? fetchError.message : 'Could not load purchases') : null
   const activeVendors = useMemo(() => (vendors ?? []).filter((v) => v.active), [vendors])
 
@@ -70,6 +83,19 @@ export function Purchases() {
             </button>
           ))}
         </div>
+        <div className="mt-1.5 flex gap-1.5 overflow-x-auto">
+          {(['all', 'unpaid', 'partial', 'paid'] as StatusFilter[]).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                statusFilter === s ? 'bg-neutral-800 text-white' : 'bg-neutral-100 text-neutral-500'
+              }`}
+            >
+              {STATUS_FILTER_LABEL[s]}
+            </button>
+          ))}
+        </div>
       </header>
 
       {purchases.length > 0 && (
@@ -86,7 +112,11 @@ export function Purchases() {
         <p className="p-6 text-center text-sm text-neutral-400">Loading…</p>
       )}
       {!loading && purchases.length === 0 && (
-        <p className="p-8 text-center text-sm text-neutral-400">No purchases in this period.</p>
+        <p className="p-8 text-center text-sm text-neutral-400">
+          {statusFilter === 'all'
+            ? 'No purchases in this period.'
+            : `No ${STATUS_FILTER_LABEL[statusFilter].toLowerCase()} purchases in this period.`}
+        </p>
       )}
 
       <div className="flex-1 divide-y divide-neutral-100 px-4">
