@@ -8,6 +8,7 @@ import { Billing } from './pages/Billing'
 import { Orders } from './pages/Orders'
 import { Stock } from './pages/Stock'
 import { Purchases } from './pages/Purchases'
+import { Salaries } from './pages/Salaries'
 import { Dashboard } from './pages/Dashboard'
 import { Settings } from './pages/Settings'
 
@@ -71,6 +72,16 @@ export default function App() {
             />
             {/* Expenses tab was split into Stock (its own nav tab) and Purchases (moved into More). */}
             <Route path="/expenses" element={<Navigate to="/stock" replace />} />
+            <Route
+              path="/salaries"
+              element={
+                <ProtectedRoute ownerOnly>
+                  <AppShell>
+                    <Salaries />
+                  </AppShell>
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/dashboard"
               element={

@@ -2,12 +2,22 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { isOwner } from '../lib/types'
-import { AlertTriangleIcon, LogoutIcon, MenuBookIcon, PackageIcon, PurchaseIcon, TruckIcon, UsersIcon } from '../components/icons'
+import {
+  AlertTriangleIcon,
+  EmployeeIcon,
+  LogoutIcon,
+  MenuBookIcon,
+  PackageIcon,
+  PurchaseIcon,
+  TruckIcon,
+  UsersIcon,
+} from '../components/icons'
 import { StaffSheet } from './StaffSheet'
 import { CategoriesSheet } from './CategoriesSheet'
 import { MenuSheet } from './MenuSheet'
 import { VendorsSheet } from './VendorsSheet'
 import { MaterialsSheet } from './MaterialsSheet'
+import { EmployeesSheet } from './EmployeesSheet'
 import { useConfirm } from '../lib/confirm'
 import { useCachedFetch } from '../lib/cache'
 import { MaterialApi } from '../lib/data'
@@ -19,6 +29,7 @@ export function Settings() {
   const [showCategories, setShowCategories] = useState(false)
   const [showVendors, setShowVendors] = useState(false)
   const [showMaterials, setShowMaterials] = useState(false)
+  const [showEmployees, setShowEmployees] = useState(false)
   const confirmDialog = useConfirm()
   const { data: materials } = useCachedFetch('materials', MaterialApi.list)
   const lowStockCount = (materials ?? []).filter((m) => m.active && m.currentStock <= m.minStockThreshold).length
@@ -104,6 +115,19 @@ export function Settings() {
                 )}
                 <span className="text-neutral-300">›</span>
               </button>
+              <button
+                onClick={() => setShowEmployees(true)}
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+              >
+                <EmployeeIcon className="h-5 w-5 text-neutral-400" />
+                <span className="flex-1 text-sm font-medium text-neutral-900">Employees</span>
+                <span className="text-neutral-300">›</span>
+              </button>
+              <Link to="/salaries" className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
+                <PurchaseIcon className="h-5 w-5 text-neutral-400" />
+                <span className="flex-1 text-sm font-medium text-neutral-900">Salaries</span>
+                <span className="text-neutral-300">›</span>
+              </Link>
             </div>
           </section>
         )}
@@ -123,6 +147,7 @@ export function Settings() {
       {showCategories && <CategoriesSheet onClose={() => setShowCategories(false)} />}
       {showVendors && <VendorsSheet onClose={() => setShowVendors(false)} />}
       {showMaterials && <MaterialsSheet onClose={() => setShowMaterials(false)} />}
+      {showEmployees && <EmployeesSheet onClose={() => setShowEmployees(false)} />}
     </div>
   )
 }

@@ -202,6 +202,17 @@ export function AlertTriangleIcon({ className }: IconProps) {
   )
 }
 
+export function EmployeeIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="3.5" y="5" width="17" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="9" cy="11" r="2" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M5.5 16c.7-1.6 2-2.4 3.5-2.4s2.8.8 3.5 2.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M15 10h3.5M15 13.5h3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function LogoutIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>

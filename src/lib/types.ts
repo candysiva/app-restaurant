@@ -148,3 +148,26 @@ export interface VendorPayment {
   paymentDate: string
   notes?: string
 }
+
+export type PayFrequency = 'daily' | 'weekly' | 'monthly'
+
+export interface Employee {
+  id: string
+  name: string
+  phone?: string
+  role?: string
+  payFrequency: PayFrequency
+  payRate: number
+  active: boolean
+}
+
+export interface SalaryPayment {
+  id: string
+  employee: { id: string; name?: string; payFrequency?: PayFrequency }
+  amount: number
+  periodStart: string
+  periodEnd: string
+  paymentDate: string
+  paymentMethod: PaymentMethod
+  notes?: string
+}

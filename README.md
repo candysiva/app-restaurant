@@ -12,7 +12,7 @@ The bottom nav is deliberately kept to five items — **Bill, Orders, Stock, Das
 - **Orders** — today / last 7 days / recent history, line-item detail, cancel a bill.
 - **Stock** — the day-to-day stock screen, open to owners and staff: materials at or below their low-stock threshold surface in a "Needs reorder" section; tap any material to log usage, wastage, or a correction (see below).
 - **Dashboard** (owner-only) — sales totals and item-wise ranking over today / week / 1-12 months / a custom number of months; trend chart by calendar date or by weekday (e.g. every Saturday's sales across a quarter). Tap a bar in the trend chart to drill the item-wise list below into just that date (or, in "by weekday" view, every occurrence of that weekday in the period) — tap it again, or hit Clear, to go back to the full period.
-- **More** — account info, and (owner-only) menu, categories, staff logins, vendors, purchases (with vendor payments/dues), materials & stock, sign out. Employee salaries and other expenses (rent, electricity, ...) are planned as follow-up features; a Sales-vs-Expenses net profit view on the Dashboard comes once all of those exist.
+- **More** — account info, and (owner-only) menu, categories, staff logins, vendors, purchases (with vendor payments/dues), employees, salaries, materials & stock, sign out. Other expenses (rent, electricity, ...) are planned as a follow-up feature; a Sales-vs-Expenses net profit view on the Dashboard comes once that exists too.
 
 ## Tech
 
@@ -39,6 +39,8 @@ The first-time-setup account is the **owner**. From **More → Staff logins** (o
 
 This role check is enforced in the app's UI/routing, not by the backend — every signed-in user's JWT can still reach the same data API. That's an acceptable tradeoff for a single small shop where everyone is trusted staff, but don't treat it as a security boundary against an untrusted user with API access.
 
+Note: **employees** (kitchen/counter helpers tracked for salary payments) are a separate concept from staff logins — an employee doesn't need an app login, and a staff login doesn't need an employee record. Manage them independently from **More → Employees** and **More → Staff logins**.
+
 ## Categories
 
 Menu categories (Tiffin, Batter, ...) are no longer fixed — owners manage them from **More → Categories**: add, rename, reorder, or delete (deleting is blocked while any menu item still uses that category, so items are never silently orphaned). Use the up/down arrows next to each category to reorder — this order controls the category tabs in Billing and the section order in **More → Menu**, so put your most-ordered category first for quicker tapping. New shops start with zero categories; the Categories screen offers a one-tap "add starter categories" shortcut, or add your own from scratch. A menu item needs at least one category to exist before you can add items from More → Menu.
@@ -58,6 +60,12 @@ Day-to-day stock work happens in the **Stock** nav tab, not More: materials at o
 **More → Purchases** records a vendor bill with one or more material lines, each with its own quantity and price — prices aren't fixed and can differ purchase to purchase, even for the same material. Saving a purchase automatically increases each material's stock and writes an audit entry (visible per-material history is planned). Optionally pay the vendor something on the spot ("Pay now") right when you record the purchase.
 
 A purchase tracks **amount paid**, **balance due**, and a **payment status** (Unpaid / Partially paid / Paid). Open any unpaid or partially-paid purchase to see its payment history and **Record payment** — the amount field defaults to the remaining balance, but can be overridden for a partial payment; recording brings the balance down (and the status up) automatically. **More → Vendors** shows each vendor's total outstanding balance (summed across all their purchases) so you can see who's owed money at a glance. Due dates set on a purchase aren't surfaced anywhere yet beyond the purchase's own detail view — a dedicated "what's coming due" view is a possible follow-up.
+
+## Employees &amp; salaries
+
+Owners manage **Employees** (master data — name, phone, role, pay frequency, pay rate) from **More → Employees**, the same add/edit/deactivate pattern as Vendors. Pay frequency and pay rate are informational only — a reminder of what an employee is normally owed — nothing is auto-calculated or auto-paid from them.
+
+**More → Salaries** is a manual payment log: pick an employee (their pay rate pre-fills the amount, editable), set the period the payment covers (e.g. "week of Aug 11 – Aug 17"), a payment date and method, and save. There's no attendance or time-clock tracking — recording what was actually paid, for whatever period you say it covers, is the whole feature. Today / last 7 days / all-time tabs match the Purchases screen.
 
 ## Order numbers
 

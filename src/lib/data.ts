@@ -2,6 +2,7 @@ import { api, qs } from './api'
 import { todayIso } from './format'
 import type {
   CategoryItem,
+  Employee,
   Material,
   MenuItem,
   Order,
@@ -10,6 +11,7 @@ import type {
   Purchase,
   PurchaseItem,
   Role,
+  SalaryPayment,
   StaffUser,
   StockTransaction,
   StockTxnType,
@@ -441,4 +443,30 @@ export async function logStockTransaction(
     MaterialApi.update(material.id, { currentStock: newStock }),
   ])
   return txn
+}
+
+export const EmployeeApi = {
+  list: () => api.get<Employee>('/employees?limit=200'),
+  create: (data: { name: string; phone?: string; role?: string; payFrequency: Employee['payFrequency']; payRate: number }) =>
+    api.post<Employee>('/employees', { ...data, active: true }),
+  update: (
+    id: string,
+    data: Partial<{ name: string; phone: string; role: string; payFrequency: Employee['payFrequency']; payRate: number; active: boolean }>,
+  ) => api.patch<Employee>(`/employees/${id}`, data),
+  remove: (id: string) => api.del(`/employees/${id}`),
+}
+
+export const SalaryPaymentApi = {
+  listByEmployee: (employeeId: string) => fetchAll<SalaryPayment>('/salary_payments', { employee: employeeId }),
+  listInRange: (fromDate: string, toDate: string) =>
+    fetchAll<SalaryPayment>('/salary_payments', { 'paymentDate[gte]': fromDate, 'paymentDate[lte]': toDate, sort: '-paymentDate' }),
+  create: (data: {
+    employee: { id: string }
+    amount: number
+    periodStart: string
+    periodEnd: string
+    paymentDate: string
+    paymentMethod: PaymentMethod
+    notes?: string
+  }) => api.post<SalaryPayment>('/salary_payments', data),
 }
