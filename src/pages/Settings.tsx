@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth'
 import { isOwner } from '../lib/types'
 import {
   AlertTriangleIcon,
+  CloseIcon,
   EmployeeIcon,
   LogoutIcon,
   MenuBookIcon,
@@ -28,6 +29,7 @@ export function Settings() {
   const { user, signOut } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
   const [showStaff, setShowStaff] = useState(false)
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false)
   const [showCategories, setShowCategories] = useState(false)
   const [showExpenseCategories, setShowExpenseCategories] = useState(false)
   const [showVendors, setShowVendors] = useState(false)
@@ -99,7 +101,7 @@ export function Settings() {
                 <span className="text-neutral-300">›</span>
               </button>
               <button
-                onClick={() => setShowCategories(true)}
+                onClick={() => setShowCategoryPicker(true)}
                 className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
               >
                 <MenuBookIcon className="h-5 w-5 text-neutral-400" />
@@ -128,14 +130,6 @@ export function Settings() {
               >
                 <EmployeeIcon className="h-5 w-5 text-neutral-400" />
                 <span className="flex-1 text-sm font-medium text-neutral-900">Employees</span>
-                <span className="text-neutral-300">›</span>
-              </button>
-              <button
-                onClick={() => setShowExpenseCategories(true)}
-                className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
-              >
-                <WalletIcon className="h-5 w-5 text-neutral-400" />
-                <span className="flex-1 text-sm font-medium text-neutral-900">Expense categories</span>
                 <span className="text-neutral-300">›</span>
               </button>
               <button
@@ -168,11 +162,63 @@ export function Settings() {
 
       {showMenu && <MenuSheet onClose={() => setShowMenu(false)} />}
       {showStaff && <StaffSheet onClose={() => setShowStaff(false)} />}
+      {showCategoryPicker && (
+        <CategoryPickerSheet
+          onClose={() => setShowCategoryPicker(false)}
+          onPickMenu={() => {
+            setShowCategoryPicker(false)
+            setShowCategories(true)
+          }}
+          onPickExpense={() => {
+            setShowCategoryPicker(false)
+            setShowExpenseCategories(true)
+          }}
+        />
+      )}
       {showCategories && <CategoriesSheet onClose={() => setShowCategories(false)} />}
       {showExpenseCategories && <ExpenseCategoriesSheet onClose={() => setShowExpenseCategories(false)} />}
       {showVendors && <VendorsSheet onClose={() => setShowVendors(false)} />}
       {showMaterials && <MaterialsSheet onClose={() => setShowMaterials(false)} />}
       {showEmployees && <EmployeesSheet onClose={() => setShowEmployees(false)} />}
+    </div>
+  )
+}
+
+function CategoryPickerSheet({
+  onClose,
+  onPickMenu,
+  onPickExpense,
+}: {
+  onClose: () => void
+  onPickMenu: () => void
+  onPickExpense: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40" onClick={onClose}>
+      <div
+        className="w-full max-w-[480px] md:max-w-[600px] rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-neutral-100 p-5 pb-3">
+          <h2 className="text-base font-bold text-neutral-900">Categories</h2>
+          <button onClick={onClose} className="rounded-full p-1 text-neutral-400 active:bg-neutral-100">
+            <CloseIcon className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="divide-y divide-neutral-100 px-5">
+          <button onClick={onPickMenu} className="flex w-full items-center gap-3 py-3.5 text-left">
+            <MenuBookIcon className="h-5 w-5 text-neutral-400" />
+            <span className="flex-1 text-sm font-medium text-neutral-900">Menu</span>
+            <span className="text-neutral-300">›</span>
+          </button>
+          <button onClick={onPickExpense} className="flex w-full items-center gap-3 py-3.5 text-left">
+            <WalletIcon className="h-5 w-5 text-neutral-400" />
+            <span className="flex-1 text-sm font-medium text-neutral-900">Other expenses</span>
+            <span className="text-neutral-300">›</span>
+          </button>
+        </div>
+        <div className="h-3" />
+      </div>
     </div>
   )
 }

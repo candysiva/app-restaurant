@@ -43,7 +43,9 @@ Note: **employees** (kitchen/counter helpers tracked for salary payments) are a 
 
 ## Categories
 
-Menu categories (Tiffin, Batter, ...) are no longer fixed — owners manage them from **More → Categories**: add, rename, reorder, or delete (deleting is blocked while any menu item still uses that category, so items are never silently orphaned). Use the up/down arrows next to each category to reorder — this order controls the category tabs in Billing and the section order in **More → Menu**, so put your most-ordered category first for quicker tapping. New shops start with zero categories; the Categories screen offers a one-tap "add starter categories" shortcut, or add your own from scratch. A menu item needs at least one category to exist before you can add items from More → Menu.
+Menu categories (Tiffin, Batter, ...) are no longer fixed — owners manage them from **More → Categories → Menu**: add, rename, reorder, or delete (deleting is blocked while any menu item still uses that category, so items are never silently orphaned). Use the up/down arrows next to each category to reorder — this order controls the category tabs in Billing and the section order in **More → Menu**, so put your most-ordered category first for quicker tapping. New shops start with zero categories; the Categories screen offers a one-tap "add starter categories" shortcut, or add your own from scratch. A menu item needs at least one category to exist before you can add items from More → Menu.
+
+The single **More → Categories** row covers both category sets the app has — tap it and pick **Menu** or **Other expenses** to manage that one; they're kept separate underneath (a menu category and an expense category are different things) but share one entry point so there's nowhere else to look for "categories."
 
 **Migrating from before this feature:** menu items created before categories existed won't have one assigned (they show up under "Uncategorized" in More → Menu and are only reachable via the "All" tab in Billing) — open each one and pick a category to file it properly.
 
@@ -73,7 +75,7 @@ Owners manage **Employees** (master data — name, phone, role, pay frequency, p
 
 **More → Other expenses** logs anything that isn't a vendor purchase or a salary — rent, electricity, repairs, transport, or whatever else the shop pays for. Each entry has a category, amount, date, payment method, and an optional payee (e.g. "TNEB") and notes. Same Today / last 7 days / all-time tabs as Purchases and Salaries, and the same tap-to-**edit or delete** as Salaries.
 
-Expense categories are owner-managed, the same way menu categories are: **More → Expense categories** to add, rename, reorder, or delete (deleting is blocked while any expense still uses that category). New shops start with zero expense categories; the screen offers a one-tap "add starter categories" shortcut (Rent, Electricity, Gas, Water, Repairs, Transport, License / tax, Miscellaneous), or add your own from scratch. An expense category needs to exist before you can log an expense.
+Expense categories are owner-managed, the same way menu categories are: **More → Categories → Other expenses** to add, rename, reorder, or delete (deleting is blocked while any expense still uses that category). New shops start with zero expense categories; the screen offers a one-tap "add starter categories" shortcut (Rent, Electricity, Gas, Water, Repairs, Transport, License / tax, Miscellaneous), or add your own from scratch. An expense category needs to exist before you can log an expense.
 
 **Migrating from before this feature:** other-expense entries logged before categories existed show up as "Uncategorized" in the list — open each one and pick a category to file it properly.
 
